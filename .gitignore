@@ -1,0 +1,18 @@
+# OS
+.DS_Store
+
+# Java / Maven (backend) — belt-and-suspenders; see BACKEND/.gitignore
+**/target/
+
+# Flutter / Dart (mobile) — belt-and-suspenders; see MOBILE/.gitignore
+**/build/
+**/.dart_tool/
+**/ios/Pods/
+**/ios/.symlinks/
+**/Flutter/ephemeral/
+**/*.env
+
+# IDE
+.idea/
+.vscode/
+*.iml

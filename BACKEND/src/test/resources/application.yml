@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:spkmainan_test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+app:
+  jwt:
+    secret: test-secret-key-that-is-long-enough-for-hs256-signing-1234567890
+    expiration-ms: 3600000
+  cors:
+    allowed-origins: "*"
