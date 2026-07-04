@@ -8,7 +8,7 @@ Monorepo berisi tiga bagian:
 | Folder | Bagian | Stack | Status |
 |--------|--------|-------|--------|
 | [`BACKEND/`](BACKEND) | REST API | Spring Boot 3.4 · Java 21 | ✅ Fondasi + auth siap |
-| [`MOBILE/`](MOBILE) | Aplikasi mobile | Flutter · Riverpod · go_router | ✅ Fondasi + auth (login masih mock) |
+| [`MOBILE/`](MOBILE) | Aplikasi mobile | Flutter · Riverpod · go_router | ✅ Read-only, tanpa login (Home rekomendasi, data mock) |
 | [`FRONTEND/`](FRONTEND) | Admin web | React 19 · Vite · TS · Tailwind | ✅ Fondasi + auth + template tabel |
 
 > Domain SPK-nya (kriteria, alternatif, bobot, metode scoring, ranking) **belum didefinisikan** —
@@ -26,9 +26,9 @@ Monorepo berisi tiga bagian:
                                           └──────────────────┘
 ```
 
-Semua client bicara ke backend lewat REST di base path `/v1` dengan **JWT bearer auth**.
-Kontrak API-nya didokumentasikan di
-[`BACKEND/docs/04_API_REFERENCE.md`](BACKEND/docs/04_API_REFERENCE.md).
+Semua client bicara ke backend lewat REST di base path `/v1`. **Web login (JWT)** untuk
+manajemen; **mobile read-only tanpa login** (hanya endpoint publik). Kontrak API-nya
+didokumentasikan di [`BACKEND/docs/04_API_REFERENCE.md`](BACKEND/docs/04_API_REFERENCE.md).
 
 ---
 
@@ -48,9 +48,9 @@ cd MOBILE
 flutter pub get
 flutter run
 ```
-Arahkan ke backend: set `ApiConfig.baseUrl` di
-[`MOBILE/lib/config/api_config.dart`](MOBILE/lib/config/api_config.dart) dan hapus blok
-`MOCK AUTH` di `auth_view_model.dart`. Detail: [`MOBILE/README.md`](MOBILE/README.md).
+Read-only & tanpa login — langsung buka layar Rekomendasi Mainan. Untuk data nyata: set
+`ApiConfig.baseUrl` di [`MOBILE/lib/config/api_config.dart`](MOBILE/lib/config/api_config.dart)
+dan hapus blok mock di `toy_api_service.dart`. Detail: [`MOBILE/README.md`](MOBILE/README.md).
 
 ### Frontend (React admin)
 ```bash
@@ -72,6 +72,7 @@ Login dengan demo user backend (`admin` / `password123`). Detail:
 
 ## Langkah berikutnya
 
-1. 🔴 Definisikan domain SPK (metode + kriteria + alternatif).
-2. 🔴 Sambungkan mobile ke backend (baseUrl + hapus mock auth).
-3. 🔴 Bangun fitur pertama di backend — pakai generator: `cd BACKEND && scripts/new-feature.sh Criterion criteria`.
+1. 🔴 Bangun endpoint domain di backend (kriteria, mainan, nilai) — pakai generator:
+   `cd BACKEND && scripts/new-feature.sh Criterion criteria`.
+2. 🔴 Sambungkan client: web (manajemen, login) & mobile (endpoint publik read-only).
+3. 🟢 Putuskan metode SPK (SAW / murni / dll.) — hanya memengaruhi perhitungan di backend, bisa belakangan.

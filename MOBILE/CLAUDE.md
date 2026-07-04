@@ -1,9 +1,12 @@
 # CLAUDE.md — Agent Instructions
 
 ## Project Overview
-Flutter mobile app for a small product. Uses a **lightweight layered MVVM + Repository**
-architecture, following the official Flutter app-architecture guidance
-(https://docs.flutter.dev/app-architecture). Read this entire file before writing any code.
+Flutter mobile app for the SPK Mainan toy decision-support system. **Read-only and login-less** —
+used by the end user / shop staff to *view* results (e.g. recommended toys); it calls only PUBLIC
+backend endpoints. (Management/login lives in the separate web `../FRONTEND`.) Uses a
+**lightweight layered MVVM + Repository** architecture, following the official Flutter
+app-architecture guidance (https://docs.flutter.dev/app-architecture). Read this entire file
+before writing any code.
 
 Comments and documentation are written in **English**. User-facing copy is in **Indonesian**
 (the app's audience), so on-screen strings stay in Indonesian.
@@ -51,9 +54,9 @@ lib/
 │   ├── storage/       # storage_keys.dart
 │   └── utils/         # validators.dart, formatter.dart, extensions.dart
 ├── data/
-│   ├── models/        # user.dart
-│   ├── services/      # auth_api_service.dart
-│   └── repositories/  # auth_repository.dart
+│   ├── models/        # toy.dart
+│   ├── services/      # toy_api_service.dart
+│   └── repositories/  # toy_repository.dart
 ├── domain/            # OPTIONAL: use_cases/, models/ (create only when needed)
 └── ui/
     ├── core/
