@@ -23,6 +23,13 @@ export default tseslint.config(
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
     },
   },
+  // Test files & helpers: relax Fast Refresh (they export non-components).
+  {
+    files: ["**/*.test.{ts,tsx}", "src/test/**"],
+    rules: {
+      "react-refresh/only-export-components": "off",
+    },
+  },
   // Turn off formatting rules that conflict with Prettier (keep this last).
   prettier,
 );

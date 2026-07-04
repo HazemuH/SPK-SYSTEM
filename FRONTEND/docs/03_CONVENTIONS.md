@@ -77,7 +77,16 @@ See also [CLAUDE.md](../CLAUDE.md) — the source of truth for the strict rules.
 - **Prettier** (`.prettierrc.json`: 2-space, double quotes, trailing commas, width 100). Run
   `npm run format`. ESLint defers all formatting to Prettier (`eslint-config-prettier`).
 
+## Testing
+
+- **Vitest + React Testing Library** (jsdom). Test files live next to the code as `*.test.ts(x)`.
+- Use `renderWithProviders()` from `@/test/test-utils` when the component uses hooks/routing/auth.
+- Prefer `getByRole`/`findByText` (accessible queries) over test ids. Assert with jest-dom
+  matchers (`toBeInTheDocument`, `toBeDisabled`). Run `npm run test` / `test:watch`.
+- Each feature: at least a happy-path and a failure/validation-path test.
+
 ## Definition of Done
 
-`npm run lint` clean, code Prettier-formatted, and `npm run build` passes (`tsc` type-check +
-`vite build`). No TypeScript errors, no unused locals/params (enforced by `tsconfig.json`).
+`npm run lint` clean, `npm run test` green, code Prettier-formatted, and `npm run build` passes
+(`tsc` type-check + `vite build`). No TypeScript errors, no unused locals/params (enforced by
+`tsconfig.json`).

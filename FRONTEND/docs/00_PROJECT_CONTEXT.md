@@ -30,6 +30,8 @@ The concrete SPK domain (method, criteria, scoring) is **not yet defined** — s
 - **Toys page** — a working management **table template** (search + loading/error/empty states).
 - **Design system** — `components/ui` primitives + theme tokens (light/dark ready via `.dark`).
 - **Generator** — `scripts/new-page.sh` scaffolds a new management page.
+- **Quality tooling** — ESLint 9 + Prettier, and **Vitest + Testing Library** (5 tests passing:
+  `Button`, `LoginPage`). Global **ErrorBoundary** wraps the app.
 
 ---
 
@@ -40,6 +42,8 @@ The concrete SPK domain (method, criteria, scoring) is **not yet defined** — s
 - **Dashboard stats are static** placeholders.
 - **Add/Edit/Delete buttons** on the toys table are not wired to mutations yet.
 - **Dark mode** tokens exist but there's no theme toggle UI yet (add `.dark` on `<html>`).
+- **Test coverage is minimal** — just example tests (Button, login validation). Add more as
+  features land.
 
 Auth is **real** — it needs the backend running (`../../BACKEND`, demo `admin`/`password123`).
 

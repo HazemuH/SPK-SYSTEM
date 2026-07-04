@@ -25,6 +25,7 @@ npm run build                # tsc type-check + vite production build → dist/
 npm run preview              # serve the built app
 npm run lint                 # ESLint (flat config: ts + react-hooks + react-refresh)
 npm run format               # Prettier --write on src
+npm run test                 # Vitest + React Testing Library (jsdom)
 ```
 
 ## Scaffold a new management page (fast path)

@@ -113,6 +113,32 @@ Show `errors.<field>.message` under each `Input`, and a server error from `getAp
 
 ---
 
+## Recipe F — Write a test (Vitest + Testing Library)
+
+Put `<name>.test.tsx` next to the code. For components using hooks/routing/auth, render with
+`renderWithProviders`:
+
+```tsx
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it } from "vitest";
+import { renderWithProviders } from "@/test/test-utils";
+import { LoginPage } from "./login-page";
+
+describe("LoginPage", () => {
+  it("shows validation errors when submitting empty", async () => {
+    renderWithProviders(<LoginPage />, { route: "/login" });
+    await userEvent.click(screen.getByRole("button", { name: "Masuk" }));
+    expect(await screen.findByText("Username wajib diisi")).toBeInTheDocument();
+  });
+});
+```
+
+Query by role/text (accessible), not test ids. For pure components (no hooks) use RTL's plain
+`render`. Run `npm run test`. See `components/ui/button.test.tsx` for a no-providers example.
+
+---
+
 ## Common pitfalls
 
 - **Blank page / 401 loop** → backend not running or `VITE_API_BASE_URL` wrong. Check `.env`.

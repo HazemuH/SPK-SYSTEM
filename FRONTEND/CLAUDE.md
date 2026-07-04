@@ -28,6 +28,8 @@ Reusable building blocks — always use these, don't reinvent:
   states `LoadingState` / `ErrorState` / `EmptyState`. Use `cn()` from `lib/utils` for classes.
 - `features/auth/use-auth.ts` → `useAuth()` for the session (`user`, `login`, `logout`).
 - `lib/types.ts` → `PageResponse<T>` matching the backend's paged list envelope.
+- `components/error-boundary.tsx` → global `ErrorBoundary` (wraps the app in `App.tsx`).
+- `test/test-utils.tsx` → `renderWithProviders()` for tests that need Query/Router/Auth.
 
 ## Folder Structure
 ```
@@ -74,14 +76,21 @@ Backend base URL `/v1`, JWT bearer. Endpoints and the `user`/error shapes are do
 `features/*/types.ts` / `pages/*/*-types.ts` in sync with it. Snake_case JSON fields stay
 snake_case in the TS types (e.g. `avatar_url`).
 
-## Definition of Done
-Before any change is complete: `npm run lint` (ESLint) is clean, `npm run build` passes (`tsc`
-type-check + `vite build`), and code is Prettier-formatted (`npm run format`). Prefer adding a page
-via the generator so structure and states are correct by default.
+## Testing
+**Vitest + React Testing Library** (jsdom). Config in `vitest.config.ts`, setup in
+`src/test/setup.ts`. Test files sit next to the code as `*.test.ts(x)`. Use
+`renderWithProviders()` from `@/test/test-utils` for anything using hooks/routing/auth. Run
+`npm run test` (or `test:watch`). See examples: `components/ui/button.test.tsx`,
+`features/auth/login-page.test.tsx`. Add a test for new features (a happy path + a failure/validation path).
 
-Tooling: **ESLint 9** (flat config, `eslint.config.js`: typescript-eslint + react-hooks +
-react-refresh) and **Prettier** (`.prettierrc.json`). Scripts: `lint`, `lint:fix`, `format`,
-`format:check`, `typecheck`, `build`.
+## Definition of Done
+Before any change is complete: `npm run lint` clean, `npm run test` green, `npm run build` passes
+(`tsc` type-check + `vite build`), and code is Prettier-formatted (`npm run format`). Prefer adding
+a page via the generator so structure and states are correct by default.
+
+Tooling: **ESLint 9** (flat config: typescript-eslint + react-hooks + react-refresh), **Prettier**,
+**Vitest** + Testing Library. Scripts: `lint`, `lint:fix`, `format`, `format:check`, `typecheck`,
+`test`, `test:watch`, `build`.
 
 ## Key References
 - Architecture → [docs/01_ARCHITECTURE.md](docs/01_ARCHITECTURE.md)
