@@ -9,7 +9,7 @@ Monorepo berisi tiga bagian:
 |--------|--------|-------|--------|
 | [`BACKEND/`](BACKEND) | REST API | Spring Boot 3.4 · Java 21 | ✅ Fondasi + auth siap |
 | [`MOBILE/`](MOBILE) | Aplikasi mobile | Flutter · Riverpod · go_router | ✅ Fondasi + auth (login masih mock) |
-| [`FRONTEND/`](FRONTEND) | Web client | _(belum diputuskan)_ | ⬜ Belum dimulai |
+| [`FRONTEND/`](FRONTEND) | Admin web | React 19 · Vite · TS · Tailwind | ✅ Fondasi + auth + template tabel |
 
 > Domain SPK-nya (kriteria, alternatif, bobot, metode scoring, ranking) **belum didefinisikan** —
 > tentukan dulu sebelum membangun fitur inti.
@@ -52,8 +52,15 @@ Arahkan ke backend: set `ApiConfig.baseUrl` di
 [`MOBILE/lib/config/api_config.dart`](MOBILE/lib/config/api_config.dart) dan hapus blok
 `MOCK AUTH` di `auth_view_model.dart`. Detail: [`MOBILE/README.md`](MOBILE/README.md).
 
-### Frontend (web)
-Belum dimulai — lihat [`FRONTEND/README.md`](FRONTEND/README.md).
+### Frontend (React admin)
+```bash
+cd FRONTEND
+cp .env.example .env
+npm install
+npm run dev                     # http://localhost:5173
+```
+Login dengan demo user backend (`admin` / `password123`). Detail:
+[`FRONTEND/README.md`](FRONTEND/README.md).
 
 ---
 
