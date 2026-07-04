@@ -4,12 +4,23 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { getApiErrorMessage } from "@/lib/api-client";
 import { toysApi } from "./toys-api";
 
-const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
+const rupiah = new Intl.NumberFormat("id-ID", {
+  style: "currency",
+  currency: "IDR",
+  maximumFractionDigits: 0,
+});
 
 /**
  * Management-table template. Copy this file to build any list/CRUD page:
@@ -24,9 +35,7 @@ export function ToysPage() {
     queryFn: toysApi.list,
   });
 
-  const toys = (data ?? []).filter((t) =>
-    t.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  const toys = (data ?? []).filter((t) => t.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="space-y-6">

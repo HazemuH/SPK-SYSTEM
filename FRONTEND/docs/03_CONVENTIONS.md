@@ -70,7 +70,14 @@ See also [CLAUDE.md](../CLAUDE.md) — the source of truth for the strict rules.
 
 ---
 
+## Linting & formatting
+
+- **ESLint 9** (flat config in `eslint.config.js`): typescript-eslint + react-hooks +
+  react-refresh. Run `npm run lint` (or `lint:fix`).
+- **Prettier** (`.prettierrc.json`: 2-space, double quotes, trailing commas, width 100). Run
+  `npm run format`. ESLint defers all formatting to Prettier (`eslint-config-prettier`).
+
 ## Definition of Done
 
-`npm run build` passes (runs `tsc` type-check + `vite build`). No TypeScript errors, no unused
-locals/params (both are enforced by `tsconfig.json`).
+`npm run lint` clean, code Prettier-formatted, and `npm run build` passes (`tsc` type-check +
+`vite build`). No TypeScript errors, no unused locals/params (enforced by `tsconfig.json`).

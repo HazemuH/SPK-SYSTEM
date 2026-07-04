@@ -75,8 +75,13 @@ Backend base URL `/v1`, JWT bearer. Endpoints and the `user`/error shapes are do
 snake_case in the TS types (e.g. `avatar_url`).
 
 ## Definition of Done
-`npm run build` passes (this runs `tsc` type-check + `vite build`) before any change is complete.
-Prefer adding a page via the generator so structure and states are correct by default.
+Before any change is complete: `npm run lint` (ESLint) is clean, `npm run build` passes (`tsc`
+type-check + `vite build`), and code is Prettier-formatted (`npm run format`). Prefer adding a page
+via the generator so structure and states are correct by default.
+
+Tooling: **ESLint 9** (flat config, `eslint.config.js`: typescript-eslint + react-hooks +
+react-refresh) and **Prettier** (`.prettierrc.json`). Scripts: `lint`, `lint:fix`, `format`,
+`format:check`, `typecheck`, `build`.
 
 ## Key References
 - Architecture → [docs/01_ARCHITECTURE.md](docs/01_ARCHITECTURE.md)

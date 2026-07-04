@@ -19,10 +19,12 @@ npm run dev                  # http://localhost:5173
 ```
 Login with the backend's demo user: **admin** / **password123** (start the backend first).
 
-## Build
+## Build & quality
 ```bash
 npm run build                # tsc type-check + vite production build → dist/
 npm run preview              # serve the built app
+npm run lint                 # ESLint (flat config: ts + react-hooks + react-refresh)
+npm run format               # Prettier --write on src
 ```
 
 ## Scaffold a new management page (fast path)
