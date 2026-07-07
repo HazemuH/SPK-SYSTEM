@@ -16,3 +16,7 @@
 .idea/
 .vscode/
 *.iml
+
+# Local design bundle — kept local, not committed (see */docs/PLAN_MVP.md instead)
+/design/
+*.zip
