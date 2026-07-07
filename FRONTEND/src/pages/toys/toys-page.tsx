@@ -1,8 +1,9 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
@@ -17,14 +18,20 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { getApiErrorMessage } from "@/lib/api-client";
 import { rupiah } from "@/lib/format";
 import { categoriesApi } from "@/pages/categories/categories-api";
-import { toysApi } from "./toys-api";
+import { ToyForm } from "./toy-form";
+import { toysApi, type Toy } from "./toys-api";
 
 const PAGE_SIZE = 10;
 
 export function ToysPage() {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [categoryCode, setCategoryCode] = useState("");
   const [page, setPage] = useState(0);
+  const [formToy, setFormToy] = useState<Toy | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<Toy | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: categoriesApi.list });
 
@@ -34,18 +41,40 @@ export function ToysPage() {
     placeholderData: keepPreviousData,
   });
 
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["toys"] });
+
+  const removeMutation = useMutation({
+    mutationFn: (id: number) => toysApi.remove(id),
+    onSuccess: () => {
+      void invalidate();
+      setDeleting(null);
+    },
+    onError: (err) => setDeleteError(getApiErrorMessage(err)),
+  });
+
   const resetTo = (fn: () => void) => {
     fn();
     setPage(0);
   };
 
+  const closeForm = () => {
+    setCreating(false);
+    setFormToy(null);
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Data Mainan</h1>
-        <p className="text-sm text-muted-foreground">
-          Alternatif SPK · kategori primer + tag filter (rating 1–5 per kriteria).
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Data Mainan</h1>
+          <p className="text-sm text-muted-foreground">
+            Alternatif SPK · kategori primer + tag filter (rating 1–5 per kriteria).
+          </p>
+        </div>
+        <Button onClick={() => setCreating(true)}>
+          <Plus className="h-4 w-4" />
+          Tambah Mainan
+        </Button>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -93,6 +122,7 @@ export function ToysPage() {
                   <TableHead>Usia</TableHead>
                   <TableHead>Stok</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="w-20">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -130,6 +160,23 @@ export function ToysPage() {
                         {toy.active ? "Aktif" : "Nonaktif"}
                       </Badge>
                     </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="outline" size="icon" onClick={() => setFormToy(toy)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            setDeleteError(null);
+                            setDeleting(toy);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -163,6 +210,42 @@ export function ToysPage() {
           </div>
         </>
       )}
+
+      {(creating || formToy) && (
+        <ToyForm
+          toy={formToy}
+          onClose={closeForm}
+          onSaved={() => {
+            void invalidate();
+            closeForm();
+          }}
+        />
+      )}
+
+      <Dialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        title="Hapus Mainan?"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setDeleting(null)}>
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={removeMutation.isPending}
+              onClick={() => deleting && removeMutation.mutate(deleting.id)}
+            >
+              Ya, Hapus
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-muted-foreground">
+          Yakin menghapus <span className="font-medium text-foreground">{deleting?.name}</span>?
+        </p>
+        {deleteError && <p className="mt-3 text-sm text-destructive">{deleteError}</p>}
+      </Dialog>
     </div>
   );
 }
