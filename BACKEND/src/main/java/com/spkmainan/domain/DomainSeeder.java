@@ -1,5 +1,6 @@
 package com.spkmainan.domain;
 
+import com.spkmainan.calculation.CalculationService;
 import com.spkmainan.category.CategoryRepository;
 import com.spkmainan.criterion.CriterionRepository;
 import com.spkmainan.toy.ToyRepository;
@@ -26,13 +27,16 @@ public class DomainSeeder implements CommandLineRunner {
     private final CriterionRepository criteria;
     private final WeightProfileRepository profiles;
     private final ToyRepository toys;
+    private final CalculationService calculations;
 
     public DomainSeeder(CategoryRepository categories, CriterionRepository criteria,
-                        WeightProfileRepository profiles, ToyRepository toys) {
+                        WeightProfileRepository profiles, ToyRepository toys,
+                        CalculationService calculations) {
         this.categories = categories;
         this.criteria = criteria;
         this.profiles = profiles;
         this.toys = toys;
+        this.calculations = calculations;
     }
 
     @Override
@@ -47,5 +51,9 @@ public class DomainSeeder implements CommandLineRunner {
         toys.saveAll(DomainSeed.toys());
         log.info("Seeded SPK domain: {} categories, {} criteria, {} profiles, {} toys",
             categories.count(), criteria.count(), profiles.count(), toys.count());
+
+        // Produce & publish an initial session so reports/mobile have data out of the box.
+        calculations.runAndPublish();
+        log.info("Seeded & published initial calculation session");
     }
 }
