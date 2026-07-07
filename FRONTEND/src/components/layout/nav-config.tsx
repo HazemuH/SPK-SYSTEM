@@ -1,4 +1,16 @@
-import { LayoutDashboard, ToyBrick, type LucideIcon } from "lucide-react";
+import {
+  LayoutDashboard,
+  Package,
+  Layers,
+  SlidersHorizontal,
+  Scale,
+  Shuffle,
+  Calculator,
+  Trophy,
+  FileText,
+  Settings,
+  type LucideIcon,
+} from "lucide-react";
 import { paths } from "@/routes/paths";
 
 export interface NavItem {
@@ -7,9 +19,16 @@ export interface NavItem {
   icon: LucideIcon;
 }
 
-/** Sidebar navigation. Add an entry when you add a management page. */
+/** Sidebar navigation — mirrors the design's 10 admin sections. */
 export const navItems: NavItem[] = [
   { label: "Dashboard", to: paths.dashboard, icon: LayoutDashboard },
-  { label: "Mainan", to: paths.toys, icon: ToyBrick },
-  // { label: "Kriteria", to: paths.criteria, icon: SlidersHorizontal },
+  { label: "Data Mainan", to: paths.toys, icon: Package },
+  { label: "Kategori", to: paths.categories, icon: Layers },
+  { label: "Kriteria", to: paths.criteria, icon: SlidersHorizontal },
+  { label: "Profil Bobot", to: paths.weightProfiles, icon: Scale },
+  { label: "Pairwise", to: paths.pairwise, icon: Shuffle },
+  { label: "Kalkulasi", to: paths.calculation, icon: Calculator },
+  { label: "Hasil", to: paths.results, icon: Trophy },
+  { label: "Laporan", to: paths.reports, icon: FileText },
+  { label: "Pengaturan", to: paths.settings, icon: Settings },
 ];

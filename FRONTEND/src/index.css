@@ -2,14 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Design tokens (shadcn-style). Edit here to re-theme the whole app. */
+/* Design tokens ported from the Hi-Fi design (design/ahp-toko-mainan/.../tokens.css):
+   Indigo primary + Amber accent, plus semantic colors. Edit here to re-theme. */
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 210 40% 98%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
-    --primary: 243 75% 59%;
+    --primary: 243 75% 59%; /* indigo #4F46E5 */
     --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96%;
     --secondary-foreground: 222 47% 11%;
@@ -17,31 +18,51 @@
     --muted-foreground: 215 16% 47%;
     --accent: 210 40% 96%;
     --accent-foreground: 222 47% 11%;
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
+    --success: 160 84% 39%; /* #10B981 */
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%; /* amber #F59E0B */
+    --warning-foreground: 0 0% 100%;
+    --info: 217 91% 60%; /* #3B82F6 */
+    --info-foreground: 0 0% 100%;
+    --violet: 258 90% 66%; /* #8B5CF6 */
+    --violet-foreground: 0 0% 100%;
+    --amber: 38 92% 50%;
+    --amber-foreground: 0 0% 100%;
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 243 75% 59%;
-    --radius: 0.5rem;
+    --radius: 0.625rem;
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 13%;
-    --card-foreground: 210 40% 98%;
+    --background: 215 60% 7%;
+    --foreground: 214 32% 92%;
+    --card: 215 45% 13%;
+    --card-foreground: 214 32% 92%;
     --primary: 243 75% 66%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 217 33% 18%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 18%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 18%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 45%;
+    --secondary: 215 40% 16%;
+    --secondary-foreground: 214 32% 92%;
+    --muted: 215 40% 16%;
+    --muted-foreground: 215 20% 60%;
+    --accent: 215 40% 16%;
+    --accent-foreground: 214 32% 92%;
+    --destructive: 0 63% 50%;
     --destructive-foreground: 0 0% 98%;
-    --border: 217 33% 22%;
-    --input: 217 33% 22%;
+    --success: 160 84% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 0 0% 100%;
+    --info: 217 91% 65%;
+    --info-foreground: 0 0% 100%;
+    --violet: 258 90% 70%;
+    --violet-foreground: 0 0% 100%;
+    --amber: 38 92% 55%;
+    --amber-foreground: 0 0% 100%;
+    --border: 215 35% 22%;
+    --input: 215 35% 22%;
     --ring: 243 75% 66%;
   }
 
@@ -52,6 +73,7 @@
   body {
     @apply bg-background text-foreground;
     font-family:
+      "Plus Jakarta Sans",
       ui-sans-serif,
       system-ui,
       -apple-system,
