@@ -1,8 +1,9 @@
 package com.spkmainan.publicapi;
 
 import com.spkmainan.ahp.SawEngine;
+import com.spkmainan.domain.Category;
 import com.spkmainan.domain.Criterion;
-import com.spkmainan.domain.DomainData;
+import com.spkmainan.domain.DomainCatalog;
 import com.spkmainan.domain.Toy;
 import com.spkmainan.domain.WeightProfile;
 import com.spkmainan.publicapi.PublicDto.CategoryView;
@@ -18,7 +19,6 @@ import com.spkmainan.publicapi.PublicDto.Recommendation;
 import com.spkmainan.publicapi.PublicDto.SortOption;
 import com.spkmainan.publicapi.PublicDto.ToyDetail;
 import com.spkmainan.publicapi.PublicDto.ToyView;
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -26,9 +26,10 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 
 /**
- * Read-side service backing the public (mobile) API. Filters/sorts/compares the
- * published AHP-SAW result; it never runs pairwise/CR (that's the admin side).
- * Ported from the design's data.jsx query helpers (recommend/catalog/compare).
+ * Read-side service backing the public (mobile) API. Reads the persisted domain
+ * via {@link DomainCatalog}, runs SAW normalization + weighted sum, and filters/
+ * sorts/compares. It never runs pairwise/CR (that's the admin side). Ported from
+ * the design's data.jsx query helpers.
  */
 @Service
 public class CatalogService {
@@ -56,72 +57,76 @@ public class CatalogService {
         new SortOption("tahan", "Paling awet"),
         new SortOption("kreatif", "Paling kreatif"));
 
-    private final DomainData data;
+    private final DomainCatalog catalog;
     private final SawEngine saw;
 
-    private List<Criterion> criteria;
-    private List<Toy> activeToys;
-    private Map<Integer, Map<String, Double>> norm; // toyId → critCode → r_ij (over active toys)
-
-    public CatalogService(DomainData data, SawEngine saw) {
-        this.data = data;
+    public CatalogService(DomainCatalog catalog, SawEngine saw) {
+        this.catalog = catalog;
         this.saw = saw;
     }
 
-    @PostConstruct
-    void init() {
-        this.criteria = data.criteria();
-        this.activeToys = data.activeToys();
-        this.norm = saw.normalize(activeToys, criteria);
+    /** Per-request view of the domain + its SAW normalization (over active toys). */
+    private record Snapshot(List<Criterion> criteria, List<Toy> activeToys,
+                            Map<Integer, Map<String, Double>> norm) {}
+
+    private Snapshot snapshot() {
+        List<Criterion> criteria = catalog.criteria();
+        List<Toy> active = catalog.activeToys();
+        return new Snapshot(criteria, active, saw.normalize(active, criteria));
     }
 
-    // ── scoring / ranking ────────────────────────────────────────────────
-    private double score(Toy toy, WeightProfile profile) {
-        return saw.score(norm.getOrDefault(toy.id(), Map.of()), profile.weights());
+    private double normValue(Snapshot s, int toyId, String critCode) {
+        return s.norm().getOrDefault(toyId, Map.of()).getOrDefault(critCode, 0.0);
     }
 
-    private List<RankedToy> rank(List<Toy> toys, WeightProfile profile) {
+    private double score(Snapshot s, Toy toy, WeightProfile profile) {
+        return saw.score(s.norm().getOrDefault(toy.id(), Map.of()), profile.weights());
+    }
+
+    private List<RankedToy> rank(Snapshot s, List<Toy> toys, WeightProfile profile) {
         List<Toy> sorted = new ArrayList<>(toys);
-        sorted.sort(Comparator.comparingDouble((Toy t) -> score(t, profile)).reversed());
+        sorted.sort(Comparator.comparingDouble((Toy t) -> score(s, t, profile)).reversed());
         List<RankedToy> out = new ArrayList<>();
         for (int i = 0; i < sorted.size(); i++) {
             Toy t = sorted.get(i);
-            out.add(new RankedToy(i + 1, score(t, profile), toyView(t)));
+            out.add(new RankedToy(i + 1, score(s, t, profile), toyView(t)));
         }
         return out;
     }
 
     // ── public queries ───────────────────────────────────────────────────
     public Meta meta() {
-        List<CategoryView> cats = data.categories().stream()
-            .map(c -> new CategoryView(c.id(), c.name(), c.description(), data.categoryCount(c.id())))
+        List<CategoryView> cats = catalog.categories().stream()
+            .map(c -> new CategoryView(c.id(), c.name(), c.description(), catalog.categoryCount(c.id())))
             .toList();
-        return new Meta(cats, criteria.stream().map(this::criterionView).toList(),
+        return new Meta(cats, catalog.criteria().stream().map(this::criterionView).toList(),
             SORT_OPTIONS, profiles());
     }
 
     public List<ProfileView> profiles() {
-        return data.profiles().stream().map(this::profileView).toList();
+        return catalog.profiles().stream().map(this::profileView).toList();
     }
 
     public List<RankedToy> top(String profileId, int limit) {
-        return rank(activeToys, data.profile(profileId)).stream().limit(Math.max(0, limit)).toList();
+        Snapshot s = snapshot();
+        return rank(s, s.activeToys(), catalog.profile(profileId)).stream()
+            .limit(Math.max(0, limit)).toList();
     }
 
     public List<RankedToy> catalog(String profileId, String sortCode, String categoryId,
                                    boolean inStock, String search) {
-        WeightProfile profile = data.profile(profileId);
+        Snapshot s = snapshot();
         List<RankedToy> ranked;
         if (sortCode != null && !sortCode.isBlank()) {
-            List<Toy> sorted = new ArrayList<>(activeToys);
-            sorted.sort(Comparator.comparingDouble((Toy t) -> normValue(t.id(), sortCode)).reversed());
+            List<Toy> sorted = new ArrayList<>(s.activeToys());
+            sorted.sort(Comparator.comparingDouble((Toy t) -> normValue(s, t.id(), sortCode)).reversed());
             ranked = new ArrayList<>();
             for (int i = 0; i < sorted.size(); i++) {
                 Toy t = sorted.get(i);
-                ranked.add(new RankedToy(i + 1, normValue(t.id(), sortCode), toyView(t)));
+                ranked.add(new RankedToy(i + 1, normValue(s, t.id(), sortCode), toyView(t)));
             }
         } else {
-            ranked = rank(activeToys, profile);
+            ranked = rank(s, s.activeToys(), catalog.profile(profileId));
         }
         String q = search == null ? "" : search.toLowerCase();
         return ranked.stream()
@@ -132,23 +137,25 @@ public class CatalogService {
     }
 
     public ToyDetail detail(int toyId) {
-        Toy toy = data.toy(toyId);
+        Toy toy = catalog.toy(toyId);
         if (toy == null) {
             return null;
         }
-        WeightProfile balanced = data.profile(DEFAULT_PROFILE);
-        List<RankedToy> global = rank(activeToys, balanced);
+        Snapshot s = snapshot();
+        WeightProfile balanced = catalog.profile(DEFAULT_PROFILE);
+        List<RankedToy> global = rank(s, s.activeToys(), balanced);
         int globalRank = global.stream().filter(r -> r.toy().id() == toyId).findFirst()
             .map(RankedToy::rank).orElse(0);
-        double sawScore = score(toy, balanced);
+        double sawScore = score(s, toy, balanced);
 
-        List<Toy> sameCat = activeToys.stream().filter(t -> t.categoryId().equals(toy.categoryId())).toList();
-        List<RankedToy> catRanked = rank(sameCat, balanced);
+        List<Toy> sameCat = s.activeToys().stream()
+            .filter(t -> t.categoryId().equals(toy.categoryId())).toList();
+        List<RankedToy> catRanked = rank(s, sameCat, balanced);
         int catRank = catRanked.stream().filter(r -> r.toy().id() == toyId).findFirst()
             .map(RankedToy::rank).orElse(0);
 
-        Map<String, Double> row = norm.getOrDefault(toyId, Map.of());
-        List<Criterion> byStrength = new ArrayList<>(criteria);
+        Map<String, Double> row = s.norm().getOrDefault(toyId, Map.of());
+        List<Criterion> byStrength = new ArrayList<>(s.criteria());
         byStrength.sort(Comparator.comparingDouble((Criterion c) -> row.getOrDefault(c.code(), 0.0)).reversed());
         List<CriterionView> strengths = byStrength.stream().limit(2).map(this::criterionView).toList();
         List<CriterionView> weaknesses = byStrength.stream()
@@ -166,14 +173,15 @@ public class CatalogService {
     }
 
     public Recommendation recommend(String usia, String budget, String tujuan, String prioritas) {
+        Snapshot s = snapshot();
         int[] age = AGE_MAP.getOrDefault(usia, new int[]{0, 99});
         long budgetMax = parseBudget(budget);
-        WeightProfile profile = data.profile(PRIO_SCENARIO.getOrDefault(prioritas, DEFAULT_PROFILE));
+        WeightProfile profile = catalog.profile(PRIO_SCENARIO.getOrDefault(prioritas, DEFAULT_PROFILE));
 
-        List<Toy> base = activeToys.stream()
+        List<Toy> base = s.activeToys().stream()
             .filter(t -> t.ageMin() <= age[1] && t.ageMax() >= age[0] && t.price() <= budgetMax)
             .toList();
-        List<RankedToy> ranked = rank(base, profile);
+        List<RankedToy> ranked = rank(s, base, profile);
 
         List<String> preferCats = TUJUAN_CAT.getOrDefault(tujuan, List.of());
         List<RankedToy> primary = reRank(ranked.stream()
@@ -186,19 +194,20 @@ public class CatalogService {
     }
 
     public CompareResult compare(List<Integer> toyIds, String profileId) {
-        WeightProfile profile = data.profile(profileId);
-        List<Toy> toys = toyIds.stream().map(data::toy).filter(t -> t != null).toList();
+        Snapshot s = snapshot();
+        WeightProfile profile = catalog.profile(profileId);
+        List<Toy> toys = toyIds.stream().map(catalog::toy).filter(t -> t != null).toList();
         List<ToyView> views = toys.stream().map(this::toyView).toList();
 
         List<CompareRow> rows = new ArrayList<>();
-        for (Criterion c : criteria) {
-            List<CompareCell> cells = new ArrayList<>();
+        for (Criterion c : s.criteria()) {
             double best = Double.NEGATIVE_INFINITY;
             for (Toy t : toys) {
-                best = Math.max(best, normValue(t.id(), c.code()));
+                best = Math.max(best, normValue(s, t.id(), c.code()));
             }
+            List<CompareCell> cells = new ArrayList<>();
             for (Toy t : toys) {
-                double v = normValue(t.id(), c.code());
+                double v = normValue(s, t.id(), c.code());
                 cells.add(new CompareCell(t.id(), v, v == best && best > 0));
             }
             rows.add(new CompareRow(criterionView(c), cells));
@@ -206,21 +215,17 @@ public class CatalogService {
 
         double winScore = Double.NEGATIVE_INFINITY;
         for (Toy t : toys) {
-            winScore = Math.max(winScore, score(t, profile));
+            winScore = Math.max(winScore, score(s, t, profile));
         }
         List<CompareTotal> totals = new ArrayList<>();
         for (Toy t : toys) {
-            double s = score(t, profile);
-            totals.add(new CompareTotal(t.id(), s, s == winScore));
+            double sc = score(s, t, profile);
+            totals.add(new CompareTotal(t.id(), sc, sc == winScore));
         }
         return new CompareResult(views, rows, totals);
     }
 
     // ── helpers ──────────────────────────────────────────────────────────
-    private double normValue(int toyId, String critCode) {
-        return norm.getOrDefault(toyId, Map.of()).getOrDefault(critCode, 0.0);
-    }
-
     private List<RankedToy> reRank(List<RankedToy> list) {
         List<RankedToy> out = new ArrayList<>();
         for (int i = 0; i < list.size(); i++) {
