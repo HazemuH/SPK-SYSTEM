@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Trophy } from "lucide-react";
 import { useState } from "react";
+import { RadarChart } from "@/components/charts/radar-chart";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
 import { WeightBar } from "@/components/ui/weight-bar";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
@@ -15,7 +17,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getApiErrorMessage } from "@/lib/api-client";
+import { percent } from "@/lib/format";
+import { publicApi } from "@/lib/public-api";
 import { calculationsApi } from "@/pages/calculation/calculations-api";
+import { criteriaApi } from "@/pages/criteria/criteria-api";
 
 export function ResultsPage() {
   const [runId, setRunId] = useState<number | null>(null);
@@ -94,6 +99,7 @@ function RankingView({
   profileCode: string;
   onProfile: (code: string) => void;
 }) {
+  const [selected, setSelected] = useState<{ id: number; name: string } | null>(null);
   const profile = detail.results.find((r) => r.profileCode === profileCode) ?? detail.results[0];
   if (!profile) return <EmptyState message="Tidak ada hasil." />;
   const maxScore = Math.max(0.0001, ...profile.ranking.map((r) => r.sawScore));
@@ -155,7 +161,11 @@ function RankingView({
             </TableHeader>
             <TableBody>
               {profile.ranking.map((r) => (
-                <TableRow key={r.toyId}>
+                <TableRow
+                  key={r.toyId}
+                  className="cursor-pointer"
+                  onClick={() => setSelected({ id: r.toyId, name: r.toyName })}
+                >
                   <TableCell className="font-bold">{r.rank}</TableCell>
                   <TableCell className="font-medium">{r.toyName}</TableCell>
                   <TableCell className="text-muted-foreground">{r.categoryName}</TableCell>
@@ -169,6 +179,73 @@ function RankingView({
           </Table>
         </CardContent>
       </Card>
+
+      {selected && (
+        <ToyRadarDialog
+          toyId={selected.id}
+          toyName={selected.name}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </div>
+  );
+}
+
+function ToyRadarDialog({
+  toyId,
+  toyName,
+  onClose,
+}: {
+  toyId: number;
+  toyName: string;
+  onClose: () => void;
+}) {
+  const detailQuery = useQuery({
+    queryKey: ["public-toy", toyId],
+    queryFn: () => publicApi.toyDetail(toyId),
+  });
+  const criteriaQuery = useQuery({ queryKey: ["criteria"], queryFn: criteriaApi.list });
+
+  const isLoading = detailQuery.isLoading || criteriaQuery.isLoading;
+  const error = detailQuery.error ?? criteriaQuery.error;
+  const criteria = criteriaQuery.data;
+  const norm = detailQuery.data?.normalized;
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={toyName}
+      description="Skor ternormalisasi SAW per kriteria (rᵢⱼ)"
+    >
+      {isLoading ? (
+        <LoadingState />
+      ) : error || !criteria || !norm ? (
+        <ErrorState message={getApiErrorMessage(error)} />
+      ) : (
+        <div className="space-y-4">
+          <div className="flex justify-center">
+            <RadarChart
+              values={criteria.map((c) => norm[c.code] ?? 0)}
+              labels={criteria.map((c) => c.abbr ?? c.name)}
+            />
+          </div>
+          <div className="space-y-2">
+            {criteria.map((c) => (
+              <div key={c.code} className="flex items-center gap-3">
+                <span className="w-28 truncate text-sm text-muted-foreground">{c.name}</span>
+                <WeightBar
+                  pct={(norm[c.code] ?? 0) * 100}
+                  barClassName={c.type === "cost" ? "bg-violet" : undefined}
+                />
+                <span className="w-10 text-right font-mono text-xs font-bold">
+                  {percent(norm[c.code] ?? 0)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </Dialog>
   );
 }
