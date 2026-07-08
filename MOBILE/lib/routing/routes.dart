@@ -6,4 +6,9 @@ class Routes {
   Routes._();
 
   static const String home = '/';
+  static const String catalog = '/katalog';
+
+  /// Toy detail route pattern (`/mainan/:id`) and a builder for a concrete id.
+  static const String detailPattern = '/mainan/:id';
+  static String detail(String id) => '/mainan/$id';
 }

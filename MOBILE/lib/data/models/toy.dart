@@ -1,41 +1,45 @@
 import 'package:equatable/equatable.dart';
 
-/// A toy (mainan) shown to the end user / shop staff — typically an entry in
-/// the SPK recommendation ranking. `score` is the computed SPK score; the rank
-/// is the item's position in the ordered list.
+/// A toy (mainan) as returned by the public API (`ToyView`).
 class Toy extends Equatable {
   const Toy({
     required this.id,
     required this.name,
+    required this.categoryId,
     required this.category,
     required this.price,
-    required this.score,
+    required this.ageMin,
+    required this.ageMax,
+    required this.stock,
+    required this.tags,
   });
 
   factory Toy.fromJson(Map<String, dynamic> json) {
     return Toy(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
+      categoryId: json['categoryId']?.toString() ?? '',
       category: json['category']?.toString() ?? '',
       price: (json['price'] as num?)?.toDouble() ?? 0,
-      score: (json['score'] as num?)?.toDouble() ?? 0,
+      ageMin: (json['ageMin'] as num?)?.toInt() ?? 0,
+      ageMax: (json['ageMax'] as num?)?.toInt() ?? 0,
+      stock: (json['stock'] as num?)?.toInt() ?? 0,
+      tags: (json['tags'] as List?)?.map((e) => e.toString()).toList() ?? const [],
     );
   }
 
   final String id;
   final String name;
+  final String categoryId;
   final String category;
   final double price;
-  final double score;
+  final int ageMin;
+  final int ageMax;
+  final int stock;
+  final List<String> tags;
 
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'category': category,
-        'price': price,
-        'score': score,
-      };
+  bool get inStock => stock > 0;
 
   @override
-  List<Object?> get props => [id, name, category, price, score];
+  List<Object?> get props => [id, name, categoryId, category, price, ageMin, ageMax, stock, tags];
 }
