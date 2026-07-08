@@ -79,6 +79,8 @@ Login dengan demo user backend (`admin` / `password123`). Detail:
 
 ## Dokumentasi
 
+- **Alur & cara kerja sistem (metode AHP-SAW, arsitektur, contoh perhitungan)** →
+  [`docs/ALUR_SISTEM.md`](docs/ALUR_SISTEM.md)
 - **Backend** — aturan & panduan untuk developer/AI: [`BACKEND/CLAUDE.md`](BACKEND/CLAUDE.md)
   dan [`BACKEND/docs/`](BACKEND/docs) (context, arsitektur, recipes, konvensi, API, roadmap).
 - **Mobile** — [`MOBILE/CLAUDE.md`](MOBILE/CLAUDE.md) dan [`MOBILE/docs/`](MOBILE/docs).
