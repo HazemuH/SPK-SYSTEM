@@ -4,9 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../config/api_config.dart';
 import '../../core/exceptions/app_exception.dart';
 import '../../core/network/api_client.dart';
+import '../models/compare_result.dart';
 import '../models/meta.dart';
 import '../models/ranked_toy.dart';
+import '../models/recommendation.dart';
 import '../models/toy_detail.dart';
+import '../models/weight_profile.dart';
 
 final publicApiServiceProvider = Provider<PublicApiService>((ref) {
   return PublicApiService(ref.watch(apiClientProvider));
@@ -58,6 +61,48 @@ class PublicApiService {
       return Meta.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _toAppException(e, 'Gagal memuat data');
+    }
+  }
+
+  /// Recommend toys from the preference quiz answers.
+  Future<Recommendation> recommend({
+    required String usia,
+    required String budget,
+    required String tujuan,
+    required String prioritas,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiConfig.recommend,
+        data: {'usia': usia, 'budget': budget, 'tujuan': tujuan, 'prioritas': prioritas},
+      );
+      return Recommendation.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _toAppException(e, 'Gagal menyusun rekomendasi');
+    }
+  }
+
+  /// Compare 2–4 toys side by side for a profile.
+  Future<CompareResult> compare(List<String> toyIds, {String profile = 'balanced'}) async {
+    try {
+      final response = await _dio.get(
+        ApiConfig.compare,
+        queryParameters: {'ids': toyIds.join(','), 'profile': profile},
+      );
+      return CompareResult.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _toAppException(e, 'Gagal membandingkan mainan');
+    }
+  }
+
+  /// Published weight profiles (for the compare profile switcher).
+  Future<List<WeightProfile>> profiles() async {
+    try {
+      final response = await _dio.get(ApiConfig.profiles);
+      final list = response.data as List;
+      return list.map((e) => WeightProfile.fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw _toAppException(e, 'Gagal memuat profil bobot');
     }
   }
 

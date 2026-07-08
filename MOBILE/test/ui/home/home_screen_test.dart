@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:spk_mainan/data/models/compare_result.dart';
 import 'package:spk_mainan/data/models/meta.dart';
 import 'package:spk_mainan/data/models/ranked_toy.dart';
+import 'package:spk_mainan/data/models/recommendation.dart';
 import 'package:spk_mainan/data/models/toy.dart';
 import 'package:spk_mainan/data/models/toy_detail.dart';
+import 'package:spk_mainan/data/models/weight_profile.dart';
 import 'package:spk_mainan/data/repositories/catalog_repository.dart';
 import 'package:spk_mainan/ui/home/widgets/home_screen.dart';
 
@@ -44,6 +47,22 @@ class _FakeCatalogRepository implements CatalogRepository {
 
   @override
   Future<Meta> meta() => throw UnimplementedError();
+
+  @override
+  Future<Recommendation> recommend({
+    required String usia,
+    required String budget,
+    required String tujuan,
+    required String prioritas,
+  }) =>
+      throw UnimplementedError();
+
+  @override
+  Future<CompareResult> compare(List<String> toyIds, {String profile = 'balanced'}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<List<WeightProfile>> profiles() => throw UnimplementedError();
 }
 
 void main() {

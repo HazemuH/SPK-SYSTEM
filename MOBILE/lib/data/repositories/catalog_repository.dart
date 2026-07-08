@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/compare_result.dart';
 import '../models/meta.dart';
 import '../models/ranked_toy.dart';
+import '../models/recommendation.dart';
 import '../models/toy_detail.dart';
+import '../models/weight_profile.dart';
 import '../services/public_api_service.dart';
 
 final catalogRepositoryProvider = Provider<CatalogRepository>((ref) {
@@ -37,4 +40,17 @@ class CatalogRepository {
   Future<ToyDetail> detail(String id) => _api.detail(id);
 
   Future<Meta> meta() => _api.meta();
+
+  Future<Recommendation> recommend({
+    required String usia,
+    required String budget,
+    required String tujuan,
+    required String prioritas,
+  }) =>
+      _api.recommend(usia: usia, budget: budget, tujuan: tujuan, prioritas: prioritas);
+
+  Future<CompareResult> compare(List<String> toyIds, {String profile = 'balanced'}) =>
+      _api.compare(toyIds, profile: profile);
+
+  Future<List<WeightProfile>> profiles() => _api.profiles();
 }

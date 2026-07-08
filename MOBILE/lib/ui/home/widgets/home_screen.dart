@@ -10,7 +10,6 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_empty_state.dart';
 import '../../core/widgets/app_error_view.dart';
 import '../../core/widgets/app_loading.dart';
-import '../../core/widgets/app_snackbar.dart';
 import '../../core/widgets/ranked_toy_tile.dart';
 import '../view_model/home_providers.dart';
 
@@ -34,7 +33,7 @@ class HomeScreen extends ConsumerWidget {
                   icon: Icons.gps_fixed,
                   title: 'Rekomendasi untuk Saya',
                   subtitle: 'Jawab preferensi → mainan terbaik',
-                  onTap: () => AppSnackbar.showInfo(context, 'Kuis rekomendasi segera hadir.'),
+                  onTap: () => context.push(Routes.recommendation),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 _ModeCard(
@@ -48,7 +47,7 @@ class HomeScreen extends ConsumerWidget {
                   icon: Icons.balance,
                   title: 'Bandingkan Mainan',
                   subtitle: 'Adu 2–4 mainan berdampingan',
-                  onTap: () => AppSnackbar.showInfo(context, 'Fitur bandingkan segera hadir.'),
+                  onTap: () => context.push(Routes.compare),
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 const _TopSection(),

@@ -7,6 +7,8 @@ class Routes {
 
   static const String home = '/';
   static const String catalog = '/katalog';
+  static const String recommendation = '/rekomendasi';
+  static const String compare = '/bandingkan';
 
   /// Toy detail route pattern (`/mainan/:id`) and a builder for a concrete id.
   static const String detailPattern = '/mainan/:id';
