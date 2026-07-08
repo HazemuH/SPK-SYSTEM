@@ -34,7 +34,20 @@ didokumentasikan di [`BACKEND/docs/04_API_REFERENCE.md`](BACKEND/docs/04_API_REF
 
 ## Cara menjalankan
 
-### Backend (Spring Boot)
+### 🐳 Docker (paling cepat — web + API + PostgreSQL sekaligus)
+```bash
+cp .env.example .env        # ganti JWT_SECRET & DB_PASSWORD untuk produksi
+docker compose up --build
+```
+- Web admin: `http://localhost:5173` (login `admin` / `password123`)
+- API: `http://localhost:8080/v1` (dipakai mobile juga)
+- Data tersimpan di PostgreSQL (volume `db-data`). nginx mem-proxy `/v1` ke backend.
+- **Mobile tidak di-container** (aplikasi native) — arahkan `ApiConfig.baseUrl` ke backend
+  (Android emulator: `http://10.0.2.2:8080/v1`).
+
+### Manual (untuk pengembangan)
+
+#### Backend (Spring Boot)
 ```bash
 cd BACKEND
 ./mvnw spring-boot:run          # jalan di http://localhost:8080/v1 (H2, tanpa setup)

@@ -1,0 +1,52 @@
+# SPK Mainan — full stack (PostgreSQL + backend + frontend).
+#   docker compose up --build
+# Web:  http://localhost:5173   (admin / password123)
+# API:  http://localhost:8080/v1  (also used by the mobile app — emulator: 10.0.2.2:8080)
+#
+# Mobile is a native app and is NOT containerized; point its ApiConfig.baseUrl
+# at the backend (Android emulator: http://10.0.2.2:8080/v1).
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: spk_mainan
+      POSTGRES_USER: spk_mainan
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-spk_mainan}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spk_mainan"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./BACKEND
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Override the default (H2) datasource to point at PostgreSQL — no code change.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/spk_mainan
+      SPRING_DATASOURCE_USERNAME: spk_mainan
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-spk_mainan}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      SPRING_H2_CONSOLE_ENABLED: "false"
+      JWT_SECRET: ${JWT_SECRET:-dev-only-change-me-please-use-a-long-random-256-bit-secret-value}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-*}
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./FRONTEND
+      args:
+        VITE_API_BASE_URL: /v1
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+
+volumes:
+  db-data:

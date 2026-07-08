@@ -1,0 +1,8 @@
+target/
+.git/
+.idea/
+*.iml
+.mvn/wrapper/*.jar
+.DS_Store
+*.md
+docs/

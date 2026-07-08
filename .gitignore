@@ -17,6 +17,9 @@
 .vscode/
 *.iml
 
+# Docker compose secrets (keep .env.example)
+/.env
+
 # Local design bundle — kept local, not committed (see */docs/PLAN_MVP.md instead)
 /design/
 *.zip
