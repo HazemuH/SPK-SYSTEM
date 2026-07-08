@@ -1,6 +1,7 @@
 package com.spkmainan.weightprofile;
 
 import jakarta.validation.constraints.NotBlank;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -14,9 +15,11 @@ public final class WeightProfileDto {
             boolean isDefault, boolean active, double cr, double lambdaMax, double ci,
             boolean consistent, Map<String, Double> weights) {
         public static Response from(WeightProfileEntity e) {
+            // Defensive copy: initialize the lazy @ElementCollection inside the
+            // transaction so it isn't touched during JSON serialization (OSIV is off).
             return new Response(e.getId(), e.getCode(), e.getName(), e.getShortName(), e.getIcon(),
                 e.getDescription(), e.isDefaultProfile(), e.isActive(), e.getCr(), e.getLambdaMax(),
-                e.getCi(), e.getCr() <= 0.10, e.getWeights());
+                e.getCi(), e.getCr() <= 0.10, new LinkedHashMap<>(e.getWeights()));
         }
     }
 

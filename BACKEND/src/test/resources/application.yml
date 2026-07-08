@@ -7,6 +7,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+    # Match production so lazy-init-during-serialization bugs surface in tests.
+    open-in-view: false
   flyway:
     enabled: true
 
