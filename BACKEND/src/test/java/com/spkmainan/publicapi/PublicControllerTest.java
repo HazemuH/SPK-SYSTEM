@@ -78,6 +78,18 @@ class PublicControllerTest {
     }
 
     @Test
+    void recommend_acceptsProfileCodeDirectly() throws Exception {
+        // Mobile now sends the chosen weight-profile code as `prioritas` (1:1 with AHP).
+        String body = """
+            {"usia":"3-5","budget":"300000","tujuan":"edukatif","prioritas":"safety"}
+            """;
+        mockMvc.perform(post("/public/recommend")
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.profileId").value("safety"));
+    }
+
+    @Test
     void compare_returnsRowsAndTotals() throws Exception {
         mockMvc.perform(get("/public/compare").param("ids", "1,2,3"))
             .andExpect(status().isOk())

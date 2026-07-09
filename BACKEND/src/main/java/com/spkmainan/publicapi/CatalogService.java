@@ -176,7 +176,12 @@ public class CatalogService {
         Snapshot s = snapshot();
         int[] age = AGE_MAP.getOrDefault(usia, new int[]{0, 99});
         long budgetMax = parseBudget(budget);
-        WeightProfile profile = catalog.profile(PRIO_SCENARIO.getOrDefault(prioritas, DEFAULT_PROFILE));
+        // `prioritas` is a published weight-profile code chosen by the user (1:1 with the AHP
+        // output). Fall back to the legacy keyword→scenario map for older clients; unknown codes
+        // resolve to the default profile inside catalog.profile().
+        String profileCode = prioritas == null ? DEFAULT_PROFILE
+            : PRIO_SCENARIO.getOrDefault(prioritas, prioritas);
+        WeightProfile profile = catalog.profile(profileCode);
 
         List<Toy> base = s.activeToys().stream()
             .filter(t -> t.ageMin() <= age[1] && t.ageMax() >= age[0] && t.price() <= budgetMax)
