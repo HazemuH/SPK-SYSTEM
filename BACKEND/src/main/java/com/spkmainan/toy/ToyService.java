@@ -6,7 +6,7 @@ import com.spkmainan.common.exception.BadRequestException;
 import com.spkmainan.common.exception.ResourceNotFoundException;
 import com.spkmainan.criterion.CriterionEntity;
 import com.spkmainan.criterion.CriterionRepository;
-import com.spkmainan.domain.CriterionType;
+import com.spkmainan.ahp.SawEngine;
 import com.spkmainan.toy.ToyDto.Request;
 import com.spkmainan.toy.ToyDto.Response;
 import java.util.LinkedHashMap;
@@ -110,13 +110,15 @@ public class ToyService {
 
     /** Scores must be for benefit criteria only, each rating in 1..5. */
     private Map<String, Integer> validatedScores(Map<String, Integer> scores) {
-        Set<String> benefitCodes = criterionRepository.findAll().stream()
-            .filter(c -> c.getType() == CriterionType.BENEFIT)
-            .map(CriterionEntity::getCode).collect(Collectors.toSet());
+        // Every criterion is rated 1–5 except "harga" (its value is the price).
+        Set<String> ratable = criterionRepository.findAll().stream()
+            .map(CriterionEntity::getCode)
+            .filter(code -> !SawEngine.PRICE_CRITERION_CODE.equals(code))
+            .collect(Collectors.toSet());
         Map<String, Integer> clean = new LinkedHashMap<>();
         for (var e : scores.entrySet()) {
-            if (!benefitCodes.contains(e.getKey())) {
-                throw new BadRequestException("Kriteria bukan benefit atau tidak dikenal: " + e.getKey());
+            if (!ratable.contains(e.getKey())) {
+                throw new BadRequestException("Kriteria tidak dikenal (atau Harga): " + e.getKey());
             }
             int v = e.getValue() == null ? 0 : e.getValue();
             if (v < 1 || v > 5) {

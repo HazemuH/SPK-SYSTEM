@@ -64,7 +64,8 @@ export function ToyForm({
 
   const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: categoriesApi.list });
   const criteriaQuery = useQuery({ queryKey: ["criteria"], queryFn: criteriaApi.list });
-  const benefits = (criteriaQuery.data ?? []).filter((c) => c.type === "benefit");
+  // Every criterion is rated 1–5 except "harga" (its value is the price field).
+  const ratable = (criteriaQuery.data ?? []).filter((c) => c.code !== "harga");
 
   const [scores, setScores] = useState<Record<string, number>>(toy?.scores ?? {});
 
@@ -100,7 +101,7 @@ export function ToyForm({
       active,
       description: values.description,
       tags,
-      scores: Object.fromEntries(benefits.map((c) => [c.code, scores[c.code] ?? 3])),
+      scores: Object.fromEntries(ratable.map((c) => [c.code, scores[c.code] ?? 3])),
     };
     try {
       if (isEdit) await toysApi.update(toy!.id, input);
@@ -212,7 +213,7 @@ export function ToyForm({
               <strong> Harga</strong> (cost) otomatis dari tab Informasi Umum.
             </p>
           </div>
-          {benefits.map((c) => {
+          {ratable.map((c) => {
             const val = scores[c.code] ?? 3;
             return (
               <div key={c.code} className="space-y-1.5">

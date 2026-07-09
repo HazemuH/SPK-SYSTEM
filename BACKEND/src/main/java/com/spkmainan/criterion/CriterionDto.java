@@ -20,4 +20,11 @@ public final class CriterionDto {
             String description,
             String abbr,
             Boolean active) {}
+
+    /** Create a new criterion. {@code type} is "benefit" or "cost". */
+    public record CreateRequest(
+            @NotBlank(message = "Nama kriteria wajib diisi") String name,
+            @NotBlank(message = "Tipe kriteria wajib diisi (benefit/cost)") String type,
+            String description,
+            String abbr) {}
 }

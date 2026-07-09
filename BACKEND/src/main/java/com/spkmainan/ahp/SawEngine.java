@@ -19,11 +19,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class SawEngine {
 
+    /** The built-in cost criterion whose raw value is the toy's selling price. */
+    public static final String PRICE_CRITERION_CODE = "harga";
+
     private record Column(double max, double min) {}
 
-    /** Raw value for a toy under a criterion (price for the cost criterion, else the 1–5 rating). */
+    /**
+     * Raw value for a toy under a criterion. The special "harga" criterion uses the
+     * toy's price; every other criterion (benefit or cost) uses its 1–5 rating.
+     * Cost criteria are still normalized with min/x (see {@link #normalize}).
+     */
     public double rawValue(Toy toy, Criterion c) {
-        if (c.type() == CriterionType.COST) {
+        if (PRICE_CRITERION_CODE.equals(c.code())) {
             return toy.price();
         }
         return toy.scores().getOrDefault(c.code(), 0);
