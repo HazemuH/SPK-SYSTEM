@@ -64,6 +64,12 @@ tidak ada logika perhitungan di sisi klien. Ini menjaga satu sumber kebenaran.
 - **Mainan** (alternatif): punya harga (cost) + rating 1–5 untuk tiap kriteria benefit.
 - **Sesi Kalkulasi**: arsip hasil ranking per profil untuk satu kali kalkulasi (bisa dipublish).
 
+> **Semua data dikelola admin (tambah/edit/hapus)** lewat web: kategori, mainan, dan **kriteria**
+> (benefit/cost). Kriteria **Harga** bersifat khusus & tetap (nilainya = harga jual, tak bisa
+> dihapus). Skripsi ini memakai **10 kriteria default** sebagai ruang lingkup; di toko nyata admin
+> bisa menambah kriteria baru. Setelah kriteria diubah → **jalankan ulang Pairwise** (bobot dihitung
+> ulang) dan **beri nilai 1–5** kriteria baru pada tiap mainan.
+
 ---
 
 ## 5. Metode AHP-SAW
