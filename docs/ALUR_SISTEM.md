@@ -155,6 +155,22 @@ ADMIN (web)                                        MOBILE (publik)
                                                       • Bandingkan 2–4 mainan
 ```
 
+### 7a. Bagaimana kuis mobile terhubung ke AHP-SAW
+
+Kuis 4 langkah menerjemahkan preferensi awam menjadi parameter SPK:
+
+| Langkah | Peran di metode |
+|---|---|
+| Usia | **filter keras** (mempersempit kandidat, bukan skoring) |
+| Budget | **filter keras** |
+| Tujuan | **filter lunak** (prioritaskan kategori) |
+| **Paling penting?** | **memilih profil bobot** = memakai satu vektor bobot hasil **AHP** yang sudah tervalidasi (CR ≤ 0,10) |
+
+Pertanyaan terakhir menampilkan **daftar profil bobot yang dipublish admin**; jawaban mengirim
+**kode profil** langsung. Jadi pengguna **tidak menghitung bobot** (yang rawan inkonsisten) — ia
+hanya **memilih skenario**, sedangkan pembobotannya tetap dari AHP. Menambah/menghapus profil di web
+otomatis mengubah opsi kuis. Ini menjaga kerigoran metode sekaligus mudah dipakai orang awam.
+
 ---
 
 ## 8. Teknologi
