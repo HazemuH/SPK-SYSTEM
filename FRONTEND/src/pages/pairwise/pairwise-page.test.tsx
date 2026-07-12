@@ -60,10 +60,10 @@ vi.mock("@/pages/criteria/criteria-api", () => ({
 const { PairwisePage } = await import("./pairwise-page");
 
 describe("PairwisePage", () => {
-  it("shows the comparison editor and a live consistency badge", async () => {
+  it("shows the grouped comparison list and a live consistency badge", async () => {
     renderWithProviders(<PairwisePage />);
-    // Editor defaults to the first pair (Keamanan ⟷ Edukasi).
-    expect(await screen.findByText(/Membandingkan:/)).toBeInTheDocument();
+    // Grouped by the row criterion (one heading per row criterion).
+    expect((await screen.findAllByText(/Seberapa penting/)).length).toBeGreaterThan(0);
     // A live CR estimate is shown.
     expect(screen.getAllByText(/Perkiraan:.*CR/).length).toBeGreaterThan(0);
   });
@@ -76,7 +76,7 @@ describe("PairwisePage", () => {
     // Drag to the extreme right (index 8 = value 9 = row/Keamanan wins outright).
     fireEvent.change(slider, { target: { value: "8" } });
     expect(
-      await screen.findByText("Keamanan mutlak lebih penting dari Edukasi"),
+      await screen.findByText(/Keamanan mutlak lebih penting dari Edukasi/),
     ).toBeInTheDocument();
   });
 });

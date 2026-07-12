@@ -38,7 +38,6 @@ export function PairwisePage() {
 
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [matrix, setMatrix] = useState<Record<string, number>>({}); // "i-j" (i<j) → value
-  const [selectedPair, setSelectedPair] = useState<[number, number]>([0, 1]);
   const [result, setResult] = useState<WeightProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [computing, setComputing] = useState(false);
@@ -65,7 +64,6 @@ export function PairwisePage() {
 
   useEffect(() => {
     setMatrix(presetFromWeights);
-    setSelectedPair([0, 1]);
     setResult(null);
     setError(null);
   }, [presetFromWeights]);
@@ -94,15 +92,12 @@ export function PairwisePage() {
     if (i < j) return matrix[`${i}-${j}`] ?? 1;
     return 1 / (matrix[`${j}-${i}`] ?? 1);
   };
+  const setPair = (i: number, j: number, v: number) =>
+    setMatrix((m) => ({ ...m, [`${i}-${j}`]: v }));
 
   // Live consistency preview over the current (unsaved) matrix.
   const full = criteria.map((_, i) => criteria.map((_, j) => cellValue(i, j)));
   const live = deriveWeights(full);
-
-  const [si, sj] = selectedPair;
-  const selValue = matrix[`${si}-${sj}`] ?? 1;
-
-  const setPairValue = (v: number) => setMatrix((m) => ({ ...m, [`${si}-${sj}`]: v }));
 
   async function handleCompute() {
     if (!criteria) return;
@@ -152,60 +147,63 @@ export function PairwisePage() {
       <div className="flex items-start gap-2 rounded-lg border border-info/30 bg-info/10 p-3 text-sm">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-info" />
         <p>
-          <strong>Klik satu sel</strong> di tabel, lalu geser slider di bawah untuk menentukan mana
-          yang lebih penting — tanpa perlu paham angka pecahan. Perbandingan{" "}
-          <strong>hanya antar kriteria</strong>; kebalikannya otomatis. Alternatif dinilai rating
-          1–5 (SAW).
+          Untuk tiap pasangan, <strong>geser slider</strong> ke arah kriteria yang lebih penting —
+          tak perlu paham angka pecahan. Tengah = sama penting. Kalimat di bawah slider menjelaskan
+          artinya. Kamu bisa mulai dari <strong>Terapkan preset profil</strong> lalu sesuaikan.
         </p>
       </div>
 
-      {/* ── The pairwise editor: friendly slider + live sentence + live CR ── */}
-      <Card>
-        <CardContent className="space-y-4 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-medium text-muted-foreground">
-              Membandingkan:{" "}
-              <span className="font-semibold text-foreground">{criteria[si].name}</span>
-              {" ⟷ "}
-              <span className="font-semibold text-foreground">{criteria[sj].name}</span>
-            </p>
-            <ConsistencyBadge cr={live.cr} consistent={live.consistent} live />
-          </div>
+      {/* Sticky action bar: preset + live CR + compute. */}
+      <div className="sticky top-2 z-10 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card/95 p-3 shadow-sm backdrop-blur">
+        <Button variant="outline" size="sm" onClick={() => setMatrix(presetFromWeights)}>
+          <RotateCcw className="h-3.5 w-3.5" />
+          Terapkan preset profil
+        </Button>
+        <div className="flex items-center gap-3">
+          <ConsistencyBadge cr={live.cr} consistent={live.consistent} live />
+          <Button onClick={handleCompute} disabled={computing}>
+            <Calculator className="h-4 w-4" />
+            {computing ? "Menghitung…" : "Hitung Bobot & CR"}
+          </Button>
+        </div>
+      </div>
 
-          <div className="flex items-center gap-3">
-            <span className="w-28 truncate text-right text-xs font-semibold text-destructive">
-              {criteria[sj].name} menang
-            </span>
-            <Slider
-              value={indexOfValue(selValue)}
-              max={saatyScale.length - 1}
-              onChange={(idx) => setPairValue(saatyScale[idx])}
-              aria-label={`Bandingkan ${criteria[si].name} dengan ${criteria[sj].name}`}
-            />
-            <span className="w-28 truncate text-xs font-semibold text-primary">
-              {criteria[si].name} menang
-            </span>
-          </div>
+      {/* Question list — grouped by the row criterion. */}
+      <div className="space-y-5">
+        {criteria.slice(0, -1).map((rc, i) => (
+          <Card key={rc.code}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">
+                Seberapa penting <span className="text-foreground">{rc.name}</span> dibanding…
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {criteria.slice(i + 1).map((cc, k) => {
+                const j = i + 1 + k;
+                const value = matrix[`${i}-${j}`] ?? 1;
+                return (
+                  <ComparisonRow
+                    key={cc.code}
+                    rowName={rc.name}
+                    colName={cc.name}
+                    value={value}
+                    onChange={(v) => setPair(i, j, v)}
+                  />
+                );
+              })}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-          <p className="text-center text-sm">
-            <span className="font-semibold">
-              {comparisonSentence(criteria[si].name, criteria[sj].name, selValue)}
-            </span>
-            <span className="ml-1 text-muted-foreground">({fraction(selValue)})</span>
-          </p>
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <div className="flex justify-center">
-            <Button variant="outline" size="sm" onClick={() => setMatrix(presetFromWeights)}>
-              <RotateCcw className="h-3.5 w-3.5" />
-              Terapkan preset profil
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ── Matrix overview: click a cell to edit it above ── */}
-      <Card>
-        <CardContent className="overflow-x-auto p-3">
+      {/* Full matrix as a read-only summary (for reference / thesis). */}
+      <details className="rounded-lg border border-border bg-card">
+        <summary className="cursor-pointer p-3 text-sm font-semibold text-muted-foreground">
+          Lihat matriks lengkap (ringkasan)
+        </summary>
+        <div className="overflow-x-auto p-3 pt-0">
           <table className="border-collapse text-xs">
             <thead>
               <tr>
@@ -228,33 +226,61 @@ export function PairwisePage() {
                     {rc.abbr}
                   </th>
                   {criteria.map((_, j) => (
-                    <MatrixCell
-                      key={j}
-                      value={cellValue(i, j)}
-                      editable={i < j}
-                      selected={i === si && j === sj}
-                      onSelect={() => setSelectedPair([i, j])}
-                    />
+                    <SummaryCell key={j} value={cellValue(i, j)} />
                   ))}
                 </tr>
               ))}
             </tbody>
           </table>
-        </CardContent>
-      </Card>
-
-      <div className="flex items-center justify-end gap-3">
-        <ConsistencyBadge cr={live.cr} consistent={live.consistent} live />
-        <Button size="lg" onClick={handleCompute} disabled={computing}>
-          <Calculator className="h-4 w-4" />
-          {computing ? "Menghitung…" : "Hitung Bobot & CR"}
-        </Button>
-      </div>
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
+        </div>
+      </details>
 
       {result && <PairwiseResult profile={result} criteria={criteria} />}
     </Shell>
+  );
+}
+
+function ComparisonRow({
+  rowName,
+  colName,
+  value,
+  onChange,
+}: {
+  rowName: string;
+  colName: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const rowFavored = value > 1 + 1e-9;
+  const colFavored = value < 1 - 1e-9;
+  return (
+    <div className="rounded-md border border-border/60 p-3">
+      <div className="mb-2 flex items-center justify-between gap-2 text-sm">
+        <span className="font-medium">
+          vs <span className="font-semibold">{colName}</span>
+        </span>
+        <span
+          className={cn(
+            "text-xs font-semibold",
+            rowFavored && "text-primary",
+            colFavored && "text-destructive",
+            !rowFavored && !colFavored && "text-muted-foreground",
+          )}
+        >
+          {comparisonSentence(rowName, colName, value)} ({fraction(value)})
+        </span>
+      </div>
+      <Slider
+        value={indexOfValue(value)}
+        max={saatyScale.length - 1}
+        onChange={(idx) => onChange(saatyScale[idx])}
+        aria-label={`Bandingkan ${rowName} dengan ${colName}`}
+      />
+      <div className="mt-1 flex justify-between text-[11px] text-muted-foreground">
+        <span>◀ {colName} lebih penting</span>
+        <span>{rowName} lebih penting ▶</span>
+      </div>
+    </div>
   );
 }
 
@@ -275,26 +301,8 @@ function ConsistencyBadge({
   );
 }
 
-function MatrixCell({
-  value,
-  editable,
-  selected,
-  onSelect,
-}: {
-  value: number;
-  editable: boolean;
-  selected: boolean;
-  onSelect: () => void;
-}) {
+function SummaryCell({ value }: { value: number }) {
   const equal = Math.abs(value - 1) < 1e-9;
-  if (!editable) {
-    return (
-      <td className="border border-border bg-muted/40 p-1 text-center text-muted-foreground">
-        {equal ? "1" : fraction(value)}
-      </td>
-    );
-  }
-  // Tint by strength (indigo = row favored, red = col favored).
   const strength = Math.min(1, Math.abs(Math.log(value)) / Math.log(9));
   const tint = equal
     ? undefined
@@ -302,17 +310,11 @@ function MatrixCell({
       ? `rgba(79,70,229,${0.08 + strength * 0.28})`
       : `rgba(239,68,68,${0.08 + strength * 0.28})`;
   return (
-    <td className="border border-border p-0.5 text-center" style={{ background: tint }}>
-      <button
-        onClick={onSelect}
-        className={cn(
-          "w-full rounded px-1 py-1 text-xs font-semibold transition-colors hover:bg-accent",
-          selected && "ring-2 ring-primary ring-offset-1 ring-offset-card",
-        )}
-        title="Klik untuk mengatur pasangan ini"
-      >
-        {fraction(value)}
-      </button>
+    <td
+      className="border border-border p-1 text-center text-muted-foreground"
+      style={{ background: tint }}
+    >
+      {equal ? "1" : fraction(value)}
     </td>
   );
 }
