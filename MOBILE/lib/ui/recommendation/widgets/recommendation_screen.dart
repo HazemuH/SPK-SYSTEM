@@ -26,7 +26,7 @@ class _Question {
 /// Static preference filters. The final "paling penting?" step is dynamic —
 /// its options are the published AHP weight profiles (see [publishedProfilesProvider]).
 const _quiz = <_Question>[
-  _Question('usia', 'Berapa usia si kecil?', 'Biar kami tampilkan mainan yang pas untuk usianya 🎈', [
+  _Question('usia', 'Berapa usia penggunanya?', 'Biar kami tampilkan mainan yang pas untuk usianya 🎈', [
     ['0-2', '0–2 tahun', '👶'],
     ['3-5', '3–5 tahun', '🧒'],
     ['6-8', '6–8 tahun', '🧑'],
