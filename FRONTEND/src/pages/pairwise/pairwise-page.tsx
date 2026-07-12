@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Calculator, Info, RotateCcw } from "lucide-react";
+import { Calculator, ChevronLeft, ChevronRight, Info, RotateCcw, Table2 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,18 @@ const indexOfValue = (v: number) =>
     saatyScale.findIndex((s) => Math.abs(s - v) < 1e-6),
   );
 
+function buildPreset(profile: WeightProfile, criteria: Criterion[]): Record<string, number> {
+  const next: Record<string, number> = {};
+  for (let i = 0; i < criteria.length; i++) {
+    for (let j = i + 1; j < criteria.length; j++) {
+      const wi = profile.weights[criteria[i].code] ?? 0.01;
+      const wj = profile.weights[criteria[j].code] ?? 0.01;
+      next[`${i}-${j}`] = snapToSaaty(wi / wj);
+    }
+  }
+  return next;
+}
+
 export function PairwisePage() {
   const [params] = useSearchParams();
   const queryClient = useQueryClient();
@@ -38,6 +50,9 @@ export function PairwisePage() {
 
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [matrix, setMatrix] = useState<Record<string, number>>({}); // "i-j" (i<j) → value
+  const [seededCode, setSeededCode] = useState<string | null>(null);
+  const [step, setStep] = useState(0); // which row criterion's page we're on
+  const [showMatrix, setShowMatrix] = useState(false);
   const [result, setResult] = useState<WeightProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [computing, setComputing] = useState(false);
@@ -48,25 +63,17 @@ export function PairwisePage() {
   const code = selectedCode ?? params.get("profile") ?? profiles?.[0]?.code ?? null;
   const profile = useMemo(() => profiles?.find((p) => p.code === code), [profiles, code]);
 
-  // A coherent starting point derived from the profile's current weights.
-  const presetFromWeights = useMemo(() => {
-    if (!profile || !criteria) return {};
-    const next: Record<string, number> = {};
-    for (let i = 0; i < criteria.length; i++) {
-      for (let j = i + 1; j < criteria.length; j++) {
-        const wi = profile.weights[criteria[i].code] ?? 0.01;
-        const wj = profile.weights[criteria[j].code] ?? 0.01;
-        next[`${i}-${j}`] = snapToSaaty(wi / wj);
-      }
-    }
-    return next;
-  }, [profile, criteria]);
-
+  // Seed the matrix ONCE per profile selection. Re-seeding on every profile refetch
+  // (e.g. after "Hitung") would wipe the user's edits — so gate on the profile code.
   useEffect(() => {
-    setMatrix(presetFromWeights);
+    if (!profile || !criteria) return;
+    if (seededCode === profile.code) return;
+    setMatrix(buildPreset(profile, criteria));
+    setSeededCode(profile.code);
+    setStep(0);
     setResult(null);
     setError(null);
-  }, [presetFromWeights]);
+  }, [profile, criteria, seededCode]);
 
   if (profilesQuery.isLoading || criteriaQuery.isLoading)
     return (
@@ -99,6 +106,10 @@ export function PairwisePage() {
   const full = criteria.map((_, i) => criteria.map((_, j) => cellValue(i, j)));
   const live = deriveWeights(full);
 
+  const totalSteps = criteria.length - 1; // last criterion is never a "row"
+  const rc = criteria[step];
+  const isLastStep = step >= totalSteps - 1;
+
   async function handleCompute() {
     if (!criteria) return;
     setComputing(true);
@@ -116,6 +127,7 @@ export function PairwisePage() {
     try {
       const updated = await weightProfilesApi.computePairwise(profile!.id, entries);
       setResult(updated);
+      // Refresh the cached profiles, but keep the current matrix (do not re-seed).
       void queryClient.invalidateQueries({ queryKey: ["weight-profiles"] });
     } catch (err) {
       setError(getApiErrorMessage(err));
@@ -147,93 +159,93 @@ export function PairwisePage() {
       <div className="flex items-start gap-2 rounded-lg border border-info/30 bg-info/10 p-3 text-sm">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-info" />
         <p>
-          Untuk tiap pasangan, <strong>geser slider</strong> ke arah kriteria yang lebih penting —
-          tak perlu paham angka pecahan. Tengah = sama penting. Kalimat di bawah slider menjelaskan
-          artinya. Kamu bisa mulai dari <strong>Terapkan preset profil</strong> lalu sesuaikan.
+          Bandingkan <strong>satu kriteria terhadap sisanya</strong> per halaman: geser slider ke
+          arah yang lebih penting (tengah = sama penting), lalu <strong>Lanjut</strong>. Mulai cepat
+          dengan <strong>Terapkan preset profil</strong>. Setelah semua, klik{" "}
+          <strong>Hitung Bobot &amp; CR</strong> untuk menyimpan.
         </p>
       </div>
 
-      {/* Sticky action bar: preset + live CR + compute. */}
+      {/* Sticky action bar. */}
       <div className="sticky top-2 z-10 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card/95 p-3 shadow-sm backdrop-blur">
-        <Button variant="outline" size="sm" onClick={() => setMatrix(presetFromWeights)}>
-          <RotateCcw className="h-3.5 w-3.5" />
-          Terapkan preset profil
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setMatrix(buildPreset(profile, criteria))}
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Terapkan preset profil
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setShowMatrix((s) => !s)}>
+            <Table2 className="h-3.5 w-3.5" />
+            {showMatrix ? "Sembunyikan tabel" : "Lihat tabel matriks"}
+          </Button>
+        </div>
         <div className="flex items-center gap-3">
           <ConsistencyBadge cr={live.cr} consistent={live.consistent} live />
           <Button onClick={handleCompute} disabled={computing}>
             <Calculator className="h-4 w-4" />
-            {computing ? "Menghitung…" : "Hitung Bobot & CR"}
+            {computing ? "Menyimpan…" : "Hitung Bobot & CR"}
           </Button>
         </div>
       </div>
 
-      {/* Question list — grouped by the row criterion. */}
-      <div className="space-y-5">
-        {criteria.slice(0, -1).map((rc, i) => (
-          <Card key={rc.code}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">
-                Seberapa penting <span className="text-foreground">{rc.name}</span> dibanding…
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {criteria.slice(i + 1).map((cc, k) => {
-                const j = i + 1 + k;
-                const value = matrix[`${i}-${j}`] ?? 1;
-                return (
-                  <ComparisonRow
-                    key={cc.code}
-                    rowName={rc.name}
-                    colName={cc.name}
-                    value={value}
-                    onChange={(v) => setPair(i, j, v)}
-                  />
-                );
-              })}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {showMatrix && <MatrixTable criteria={criteria} cellValue={cellValue} />}
+
+      {/* One criterion per page. */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <CardTitle className="text-base">
+              Seberapa penting <span className="text-primary">{rc.name}</span> dibanding kriteria
+              lain?
+            </CardTitle>
+            <span className="text-xs font-medium text-muted-foreground">
+              Langkah {step + 1} dari {totalSteps}
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {criteria.slice(step + 1).map((cc, k) => {
+            const j = step + 1 + k;
+            const value = matrix[`${step}-${j}`] ?? 1;
+            return (
+              <ComparisonRow
+                key={cc.code}
+                rowName={rc.name}
+                colName={cc.name}
+                value={value}
+                onChange={(v) => setPair(step, j, v)}
+              />
+            );
+          })}
+
+          <div className="flex items-center justify-between pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setStep((s) => Math.max(0, s - 1))}
+              disabled={step === 0}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Sebelumnya
+            </Button>
+            {isLastStep ? (
+              <Button onClick={handleCompute} disabled={computing}>
+                <Calculator className="h-4 w-4" />
+                {computing ? "Menyimpan…" : "Selesai — Hitung & Simpan"}
+              </Button>
+            ) : (
+              <Button onClick={() => setStep((s) => Math.min(totalSteps - 1, s + 1))}>
+                Lanjut
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
-
-      {/* Full matrix as a read-only summary (for reference / thesis). */}
-      <details className="rounded-lg border border-border bg-card">
-        <summary className="cursor-pointer p-3 text-sm font-semibold text-muted-foreground">
-          Lihat matriks lengkap (ringkasan)
-        </summary>
-        <div className="overflow-x-auto p-3 pt-0">
-          <table className="border-collapse text-xs">
-            <thead>
-              <tr>
-                <th className="sticky left-0 z-10 bg-card p-2" />
-                {criteria.map((c) => (
-                  <th
-                    key={c.code}
-                    className="min-w-14 p-1 text-center font-semibold text-muted-foreground"
-                    title={c.name}
-                  >
-                    {c.abbr}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {criteria.map((rc, i) => (
-                <tr key={rc.code}>
-                  <th className="sticky left-0 z-10 whitespace-nowrap bg-card p-2 text-right font-semibold text-muted-foreground">
-                    {rc.abbr}
-                  </th>
-                  {criteria.map((_, j) => (
-                    <SummaryCell key={j} value={cellValue(i, j)} />
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </details>
 
       {result && <PairwiseResult profile={result} criteria={criteria} />}
     </Shell>
@@ -301,21 +313,67 @@ function ConsistencyBadge({
   );
 }
 
-function SummaryCell({ value }: { value: number }) {
-  const equal = Math.abs(value - 1) < 1e-9;
-  const strength = Math.min(1, Math.abs(Math.log(value)) / Math.log(9));
-  const tint = equal
-    ? undefined
-    : value > 1
-      ? `rgba(79,70,229,${0.08 + strength * 0.28})`
-      : `rgba(239,68,68,${0.08 + strength * 0.28})`;
+function MatrixTable({
+  criteria,
+  cellValue,
+}: {
+  criteria: Criterion[];
+  cellValue: (i: number, j: number) => number;
+}) {
   return (
-    <td
-      className="border border-border p-1 text-center text-muted-foreground"
-      style={{ background: tint }}
-    >
-      {equal ? "1" : fraction(value)}
-    </td>
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm text-muted-foreground">
+          Matriks perbandingan (hasil isianmu)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="overflow-x-auto">
+        <table className="border-collapse text-xs">
+          <thead>
+            <tr>
+              <th className="sticky left-0 z-10 bg-card p-2" />
+              {criteria.map((c) => (
+                <th
+                  key={c.code}
+                  className="min-w-14 p-1 text-center font-semibold text-muted-foreground"
+                  title={c.name}
+                >
+                  {c.abbr}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {criteria.map((rc, i) => (
+              <tr key={rc.code}>
+                <th className="sticky left-0 z-10 whitespace-nowrap bg-card p-2 text-right font-semibold text-muted-foreground">
+                  {rc.abbr}
+                </th>
+                {criteria.map((_, j) => {
+                  const value = cellValue(i, j);
+                  const equal = Math.abs(value - 1) < 1e-9;
+                  const strength = Math.min(1, Math.abs(Math.log(value)) / Math.log(9));
+                  const tint = equal
+                    ? undefined
+                    : value > 1
+                      ? `rgba(79,70,229,${0.08 + strength * 0.28})`
+                      : `rgba(239,68,68,${0.08 + strength * 0.28})`;
+                  return (
+                    <td
+                      key={j}
+                      className="border border-border p-1 text-center text-muted-foreground"
+                      style={{ background: tint }}
+                    >
+                      {equal ? "1" : fraction(value)}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
   );
 }
 
