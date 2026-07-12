@@ -1,8 +1,14 @@
 package com.spkmainan.publicapi;
 
 import com.spkmainan.ahp.SawEngine;
-import com.spkmainan.domain.Category;
+import com.spkmainan.calculation.CalculationCriterion;
+import com.spkmainan.calculation.CalculationNorm;
+import com.spkmainan.calculation.CalculationResult;
+import com.spkmainan.calculation.CalculationRun;
+import com.spkmainan.calculation.CalculationRunRepository;
+import com.spkmainan.calculation.RankingEntry;
 import com.spkmainan.domain.Criterion;
+import com.spkmainan.domain.CriterionType;
 import com.spkmainan.domain.DomainCatalog;
 import com.spkmainan.domain.Toy;
 import com.spkmainan.domain.WeightProfile;
@@ -21,15 +27,20 @@ import com.spkmainan.publicapi.PublicDto.ToyDetail;
 import com.spkmainan.publicapi.PublicDto.ToyView;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Read-side service backing the public (mobile) API. Reads the persisted domain
- * via {@link DomainCatalog}, runs SAW normalization + weighted sum, and filters/
- * sorts/compares. It never runs pairwise/CR (that's the admin side). Ported from
- * the design's data.jsx query helpers.
+ * Read-side service backing the public (mobile) API. It serves the latest
+ * <b>published</b> calculation run: SAW scores, ranking, weights, and normalized
+ * values (r_ij) are frozen at publish time (the publish gate). Toy display
+ * attributes (name/price/stock/…) are hydrated live per toy_id, so a shop's
+ * current price/stock shows through while the decision output stays frozen until
+ * the admin re-runs + re-publishes. No published run → everything is empty.
  */
 @Service
 public class CatalogService {
@@ -59,31 +70,96 @@ public class CatalogService {
 
     private final DomainCatalog catalog;
     private final SawEngine saw;
+    private final CalculationRunRepository runs;
 
-    public CatalogService(DomainCatalog catalog, SawEngine saw) {
+    public CatalogService(DomainCatalog catalog, SawEngine saw, CalculationRunRepository runs) {
         this.catalog = catalog;
         this.saw = saw;
+        this.runs = runs;
     }
 
-    /** Per-request view of the domain + its SAW normalization (over active toys). */
-    private record Snapshot(List<Criterion> criteria, List<Toy> activeToys,
-                            Map<Integer, Map<String, Double>> norm) {}
+    /**
+     * A published, frozen view of the decision: criteria/norm/weights come from the
+     * latest published run; toys are the frozen set hydrated with <b>live</b> attributes
+     * (deleted toys dropped). {@code present == false} means nothing is published.
+     */
+    private record PublishedSnapshot(boolean present, List<Criterion> criteria, List<Toy> toys,
+                                     Map<Integer, Toy> toyById,
+                                     Map<Integer, Map<String, Double>> norm,
+                                     Map<String, WeightProfile> profiles) {
 
-    private Snapshot snapshot() {
-        List<Criterion> criteria = catalog.criteria();
-        List<Toy> active = catalog.activeToys();
-        return new Snapshot(criteria, active, saw.normalize(active, criteria));
+        static PublishedSnapshot empty() {
+            return new PublishedSnapshot(false, List.of(), List.of(), Map.of(), Map.of(), Map.of());
+        }
+
+        /** Frozen profile by code, falling back to the default, then any available profile. */
+        WeightProfile profileOrDefault(String code) {
+            if (code != null && profiles.containsKey(code)) {
+                return profiles.get(code);
+            }
+            if (profiles.containsKey(DEFAULT_PROFILE)) {
+                return profiles.get(DEFAULT_PROFILE);
+            }
+            return profiles.values().stream().findFirst().orElse(null);
+        }
     }
 
-    private double normValue(Snapshot s, int toyId, String critCode) {
+    /** Build the frozen snapshot from the latest published run (empty if none published). */
+    private PublishedSnapshot buildSnapshot() {
+        Optional<CalculationRun> pub = runs.findFirstByPublishedTrueOrderByPublishedAtDesc();
+        if (pub.isEmpty()) {
+            return PublishedSnapshot.empty();
+        }
+        CalculationRun run = pub.get();
+
+        List<Criterion> criteria = run.getCriteria().stream()
+            .sorted(Comparator.comparingInt(CalculationCriterion::getNo))
+            .map(c -> new Criterion(c.getCode(), c.getNo(), c.getName(),
+                CriterionType.valueOf(c.getType()), null, c.getAbbr()))
+            .toList();
+
+        // Frozen r_ij, keeping only toys that still exist live (deleted toys are dropped).
+        Map<Integer, Map<String, Double>> norm = new LinkedHashMap<>();
+        Map<Integer, Toy> toyById = new LinkedHashMap<>();
+        for (CalculationNorm n : run.getNorms()) {
+            Toy live = toyById.get(n.getToyId());
+            if (live == null && !toyById.containsKey(n.getToyId())) {
+                live = catalog.toy(n.getToyId());
+                toyById.put(n.getToyId(), live);   // may be null (deleted) — cached to avoid re-query
+            }
+            if (toyById.get(n.getToyId()) == null) {
+                continue;   // deleted toy: skip its frozen values
+            }
+            norm.computeIfAbsent(n.getToyId(), k -> new LinkedHashMap<>())
+                .put(n.getCriterionCode(), n.getNormValue());
+        }
+        toyById.values().removeIf(t -> t == null);
+        List<Toy> toys = new ArrayList<>(toyById.values());
+
+        // Frozen profiles: weights + cr/name/shortName/icon.
+        Map<String, WeightProfile> profiles = new LinkedHashMap<>();
+        for (CalculationResult r : run.getResults()) {
+            Map<String, Double> w = new LinkedHashMap<>();
+            r.getWeights().forEach(cw -> w.put(cw.getCriterionCode(), cw.getWeight()));
+            profiles.put(r.getProfileCode(), new WeightProfile(
+                r.getProfileCode(), r.getProfileName(), r.getShortName(), r.getIcon(),
+                null, r.getCr(), r.getLambdaMax(), r.getCi(), w));
+        }
+        return new PublishedSnapshot(true, criteria, toys, toyById, norm, profiles);
+    }
+
+    private double normValue(PublishedSnapshot s, int toyId, String critCode) {
         return s.norm().getOrDefault(toyId, Map.of()).getOrDefault(critCode, 0.0);
     }
 
-    private double score(Snapshot s, Toy toy, WeightProfile profile) {
+    private double score(PublishedSnapshot s, Toy toy, WeightProfile profile) {
         return saw.score(s.norm().getOrDefault(toy.id(), Map.of()), profile.weights());
     }
 
-    private List<RankedToy> rank(Snapshot s, List<Toy> toys, WeightProfile profile) {
+    private List<RankedToy> rank(PublishedSnapshot s, List<Toy> toys, WeightProfile profile) {
+        if (profile == null) {
+            return List.of();
+        }
         List<Toy> sorted = new ArrayList<>(toys);
         sorted.sort(Comparator.comparingDouble((Toy t) -> score(s, t, profile)).reversed());
         List<RankedToy> out = new ArrayList<>();
@@ -95,30 +171,36 @@ public class CatalogService {
     }
 
     // ── public queries ───────────────────────────────────────────────────
+    @Transactional(readOnly = true)
     public Meta meta() {
+        PublishedSnapshot s = buildSnapshot();
+        // Categories are structural filter labels — always live. Criteria/profiles are frozen.
         List<CategoryView> cats = catalog.categories().stream()
             .map(c -> new CategoryView(c.id(), c.name(), c.description(), catalog.categoryCount(c.id())))
             .toList();
-        return new Meta(cats, catalog.criteria().stream().map(this::criterionView).toList(),
-            SORT_OPTIONS, profiles());
+        return new Meta(cats, s.criteria().stream().map(this::criterionView).toList(),
+            SORT_OPTIONS, s.profiles().values().stream().map(this::profileView).toList());
     }
 
+    @Transactional(readOnly = true)
     public List<ProfileView> profiles() {
-        return catalog.profiles().stream().map(this::profileView).toList();
+        return buildSnapshot().profiles().values().stream().map(this::profileView).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<RankedToy> top(String profileId, int limit) {
-        Snapshot s = snapshot();
-        return rank(s, s.activeToys(), catalog.profile(profileId)).stream()
+        PublishedSnapshot s = buildSnapshot();
+        return rank(s, s.toys(), s.profileOrDefault(profileId)).stream()
             .limit(Math.max(0, limit)).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<RankedToy> catalog(String profileId, String sortCode, String categoryId,
                                    boolean inStock, String search) {
-        Snapshot s = snapshot();
+        PublishedSnapshot s = buildSnapshot();
         List<RankedToy> ranked;
         if (sortCode != null && !sortCode.isBlank()) {
-            List<Toy> sorted = new ArrayList<>(s.activeToys());
+            List<Toy> sorted = new ArrayList<>(s.toys());
             sorted.sort(Comparator.comparingDouble((Toy t) -> normValue(s, t.id(), sortCode)).reversed());
             ranked = new ArrayList<>();
             for (int i = 0; i < sorted.size(); i++) {
@@ -126,7 +208,7 @@ public class CatalogService {
                 ranked.add(new RankedToy(i + 1, normValue(s, t.id(), sortCode), toyView(t)));
             }
         } else {
-            ranked = rank(s, s.activeToys(), catalog.profile(profileId));
+            ranked = rank(s, s.toys(), s.profileOrDefault(profileId));
         }
         String q = search == null ? "" : search.toLowerCase();
         return ranked.stream()
@@ -136,19 +218,20 @@ public class CatalogService {
             .toList();
     }
 
+    @Transactional(readOnly = true)
     public ToyDetail detail(int toyId) {
-        Toy toy = catalog.toy(toyId);
+        PublishedSnapshot s = buildSnapshot();
+        Toy toy = s.toyById().get(toyId);
         if (toy == null) {
-            return null;
+            return null;   // not in the published snapshot (or deleted) → gated out
         }
-        Snapshot s = snapshot();
-        WeightProfile balanced = catalog.profile(DEFAULT_PROFILE);
-        List<RankedToy> global = rank(s, s.activeToys(), balanced);
+        WeightProfile balanced = s.profileOrDefault(DEFAULT_PROFILE);
+        List<RankedToy> global = rank(s, s.toys(), balanced);
         int globalRank = global.stream().filter(r -> r.toy().id() == toyId).findFirst()
             .map(RankedToy::rank).orElse(0);
-        double sawScore = score(s, toy, balanced);
+        double sawScore = balanced == null ? 0.0 : score(s, toy, balanced);
 
-        List<Toy> sameCat = s.activeToys().stream()
+        List<Toy> sameCat = s.toys().stream()
             .filter(t -> t.categoryId().equals(toy.categoryId())).toList();
         List<RankedToy> catRanked = rank(s, sameCat, balanced);
         int catRank = catRanked.stream().filter(r -> r.toy().id() == toyId).findFirst()
@@ -172,18 +255,22 @@ public class CatalogService {
             globalRank, catRank, sameCat.size(), row, strengths, weaknesses, nextBest);
     }
 
+    @Transactional(readOnly = true)
     public Recommendation recommend(String usia, String budget, String tujuan, String prioritas) {
-        Snapshot s = snapshot();
+        PublishedSnapshot s = buildSnapshot();
         int[] age = AGE_MAP.getOrDefault(usia, new int[]{0, 99});
         long budgetMax = parseBudget(budget);
         // `prioritas` is a published weight-profile code chosen by the user (1:1 with the AHP
         // output). Fall back to the legacy keyword→scenario map for older clients; unknown codes
-        // resolve to the default profile inside catalog.profile().
+        // resolve to the default profile inside the snapshot.
         String profileCode = prioritas == null ? DEFAULT_PROFILE
             : PRIO_SCENARIO.getOrDefault(prioritas, prioritas);
-        WeightProfile profile = catalog.profile(profileCode);
+        WeightProfile profile = s.profileOrDefault(profileCode);
+        if (profile == null) {
+            return new Recommendation(profileCode, "", 0, true, List.of(), List.of());
+        }
 
-        List<Toy> base = s.activeToys().stream()
+        List<Toy> base = s.toys().stream()
             .filter(t -> t.ageMin() <= age[1] && t.ageMax() >= age[0] && t.price() <= budgetMax)
             .toList();
         List<RankedToy> ranked = rank(s, base, profile);
@@ -198,10 +285,11 @@ public class CatalogService {
             primary.size() < 5, primary, others);
     }
 
+    @Transactional(readOnly = true)
     public CompareResult compare(List<Integer> toyIds, String profileId) {
-        Snapshot s = snapshot();
-        WeightProfile profile = catalog.profile(profileId);
-        List<Toy> toys = toyIds.stream().map(catalog::toy).filter(t -> t != null).toList();
+        PublishedSnapshot s = buildSnapshot();
+        WeightProfile profile = s.profileOrDefault(profileId);
+        List<Toy> toys = toyIds.stream().map(id -> s.toyById().get(id)).filter(t -> t != null).toList();
         List<ToyView> views = toys.stream().map(this::toyView).toList();
 
         List<CompareRow> rows = new ArrayList<>();
@@ -220,11 +308,11 @@ public class CatalogService {
 
         double winScore = Double.NEGATIVE_INFINITY;
         for (Toy t : toys) {
-            winScore = Math.max(winScore, score(s, t, profile));
+            winScore = Math.max(winScore, profile == null ? 0.0 : score(s, t, profile));
         }
         List<CompareTotal> totals = new ArrayList<>();
         for (Toy t : toys) {
-            double sc = score(s, t, profile);
+            double sc = profile == null ? 0.0 : score(s, t, profile);
             totals.add(new CompareTotal(t.id(), sc, sc == winScore));
         }
         return new CompareResult(views, rows, totals);
