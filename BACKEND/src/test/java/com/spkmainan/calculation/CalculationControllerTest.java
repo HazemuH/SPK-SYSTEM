@@ -1,5 +1,6 @@
 package com.spkmainan.calculation;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -29,6 +30,24 @@ class CalculationControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private CalculationRunRepository runRepo;
+
+    @Test
+    @WithMockUser
+    void run_freezesCriteriaWeightsAndNorm() throws Exception {
+        String body = mockMvc.perform(post("/calculations/run"))
+            .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        long id = objectMapper.readTree(body).get("id").asLong();
+
+        CalculationRun run = runRepo.findById(id).orElseThrow();
+        // 10 active criteria seeded → 10 frozen criteria + per-profile 10 weights; norm non-empty.
+        assertThat(run.getCriteria()).hasSize(10);
+        assertThat(run.getNorms()).isNotEmpty();
+        assertThat(run.getResults().get(0).getWeights()).hasSize(10);
+        assertThat(run.getResults().get(0).getShortName()).isNotBlank();
+    }
 
     @Test
     void precheck_withoutAuth_returns401() throws Exception {

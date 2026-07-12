@@ -89,9 +89,29 @@ public class CalculationService {
         String code = String.format("%03d", runs.count() + 1);
         CalculationRun run = new CalculationRun(code, Instant.now(), active.size());
 
+        // Freeze the criteria set (type drives normalization; name/abbr for labels).
+        for (Criterion c : criteria) {
+            run.addCriterion(new CalculationCriterion(
+                c.code(), c.name(), c.abbr(), c.type().name(), c.no()));
+        }
+        // Freeze the normalized decision matrix r_ij.
+        for (Toy t : active) {
+            Map<String, Double> row = norm.getOrDefault(t.id(), Map.of());
+            for (Criterion c : criteria) {
+                run.addNorm(new CalculationNorm(t.id(), c.code(), row.getOrDefault(c.code(), 0.0)));
+            }
+        }
+
         for (WeightProfile profile : catalog.profiles()) {
             CalculationResult result = new CalculationResult(profile.id(), profile.name(),
                 profile.cr(), profile.lambdaMax(), profile.ci(), profile.consistent());
+            result.setShortName(profile.shortName());
+            result.setIcon(profile.icon());
+            // Freeze the AHP weights (only for the active criteria in this run).
+            for (Criterion c : criteria) {
+                result.addWeight(new CalculationWeight(
+                    c.code(), profile.weights().getOrDefault(c.code(), 0.0)));
+            }
 
             List<Toy> sorted = new ArrayList<>(active);
             sorted.sort(Comparator.comparingDouble(
