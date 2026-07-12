@@ -8,6 +8,7 @@ import com.spkmainan.calculation.CalculationDto.ProfileSummary;
 import com.spkmainan.calculation.CalculationDto.RankingRow;
 import com.spkmainan.calculation.CalculationDto.RunDetail;
 import com.spkmainan.calculation.CalculationDto.RunSummary;
+import com.spkmainan.common.exception.BadRequestException;
 import com.spkmainan.common.exception.ResourceNotFoundException;
 import com.spkmainan.domain.Criterion;
 import com.spkmainan.domain.CriterionType;
@@ -43,7 +44,7 @@ public class CalculationService {
     @Transactional(readOnly = true)
     public PrecheckResponse precheck() {
         List<WeightProfile> profiles = catalog.profiles();
-        List<Criterion> criteria = catalog.criteria();
+        List<Criterion> criteria = catalog.activeCriteria();
         List<Toy> toys = catalog.activeToys();
         List<String> benefit = criteria.stream()
             .filter(c -> c.type() == CriterionType.BENEFIT).map(Criterion::code).toList();
@@ -73,7 +74,15 @@ public class CalculationService {
     // ── run ──────────────────────────────────────────────────────────────
     @Transactional
     public RunSummary run() {
-        List<Criterion> criteria = catalog.criteria();
+        PrecheckResponse pre = precheck();
+        if (!pre.allOk()) {
+            String failing = pre.items().stream()
+                .filter(i -> !i.ok())
+                .map(PrecheckItem::label)
+                .collect(java.util.stream.Collectors.joining("; "));
+            throw new BadRequestException("Kalkulasi ditolak — perbaiki dulu: " + failing);
+        }
+        List<Criterion> criteria = catalog.activeCriteria();
         List<Toy> active = catalog.activeToys();
         Map<Integer, Map<String, Double>> norm = saw.normalize(active, criteria);
 

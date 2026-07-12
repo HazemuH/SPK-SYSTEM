@@ -2,6 +2,7 @@ package com.spkmainan.domain;
 
 import com.spkmainan.category.CategoryEntity;
 import com.spkmainan.category.CategoryRepository;
+import com.spkmainan.criterion.CriterionEntity;
 import com.spkmainan.criterion.CriterionRepository;
 import com.spkmainan.toy.ToyEntity;
 import com.spkmainan.toy.ToyRepository;
@@ -45,9 +46,21 @@ public class DomainCatalog {
 
     public List<Criterion> criteria() {
         return criterionRepo.findAllByOrderByNoAsc().stream()
-            .map(c -> new Criterion(c.getCode(), c.getNo(), c.getName(), c.getType(),
-                c.getDescription(), c.getAbbr()))
+            .map(this::toCriterion)
             .toList();
+    }
+
+    /** Only active criteria (archived/inactive are excluded from AHP-SAW). */
+    public List<Criterion> activeCriteria() {
+        return criterionRepo.findAllByOrderByNoAsc().stream()
+            .filter(CriterionEntity::isActive)
+            .map(this::toCriterion)
+            .toList();
+    }
+
+    private Criterion toCriterion(CriterionEntity c) {
+        return new Criterion(c.getCode(), c.getNo(), c.getName(), c.getType(),
+            c.getDescription(), c.getAbbr());
     }
 
     public List<WeightProfile> profiles() {

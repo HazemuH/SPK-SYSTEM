@@ -2,15 +2,19 @@ package com.spkmainan.calculation;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.spkmainan.weightprofile.WeightProfileDto;
+import java.util.List;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +50,23 @@ class CalculationControllerTest {
         mockMvc.perform(get("/calculations"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(Matchers.greaterThanOrEqualTo(1)));
+    }
+
+    @Test
+    @WithMockUser
+    void run_rejectedWhenAProfileIsInconsistent() throws Exception {
+        // Make profile 1 inconsistent: a maximal-intensity 3-cycle (A>B>C>A at 9) → CR ≫ 0.10.
+        var entries = List.of(
+            new WeightProfileDto.PairwiseEntry("keamanan", "edukasi", 9.0),
+            new WeightProfileDto.PairwiseEntry("edukasi", "usia", 9.0),
+            new WeightProfileDto.PairwiseEntry("usia", "keamanan", 9.0));
+        String body = objectMapper.writeValueAsString(new WeightProfileDto.PairwiseRequest(entries));
+        mockMvc.perform(put("/weight-profiles/1/pairwise")
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isOk());
+
+        // precheck now fails (a profile has CR > 0.10) → run must be rejected.
+        mockMvc.perform(post("/calculations/run")).andExpect(status().isBadRequest());
     }
 
     @Test
