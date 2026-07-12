@@ -210,6 +210,7 @@ Data awal (8 kategori, 10 kriteria, 5 profil, 50 mainan) **diisi otomatis** oleh
 | "Publish" sebagai **gerbang** ke mobile | ✅ **ditegakkan** — mobile hanya membaca snapshot **terpublish**; edit admin tak terlihat sampai jalankan + publikasikan ulang |
 | Blokir profil dengan CR > 0,10 dari kalkulasi | ✅ `run()` **menolak** (400) bila precheck gagal (CR>0,10 / mainan belum dinilai) |
 | Kriteria non-aktif ikut perhitungan | ✅ dikecualikan — hanya kriteria **aktif** yang dipakai AHP-SAW & tampil di mobile |
+| Admin tak sadar perlu publish ulang | ✅ dashboard menampilkan **sinyal "basi"** (`publishStatus.stale`) + banner "publikasikan ulang" saat data berubah sejak publikasi terakhir |
 
 ### 10a. Gerbang publish (cara kerja)
 
