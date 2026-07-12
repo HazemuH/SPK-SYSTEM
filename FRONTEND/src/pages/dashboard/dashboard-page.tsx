@@ -1,9 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
-import { Package, SlidersHorizontal, Layers, Scale, type LucideIcon } from "lucide-react";
+import {
+  AlertTriangle,
+  Package,
+  SlidersHorizontal,
+  Layers,
+  Scale,
+  type LucideIcon,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WeightBar } from "@/components/ui/weight-bar";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { paths } from "@/routes/paths";
 import {
   Table,
   TableBody,
@@ -55,8 +64,43 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
   const maxCat = Math.max(1, ...data.categoryDistribution.map((c) => c.count));
   const maxScore = Math.max(0.0001, ...data.top5.map((t) => t.score));
 
+  const ps = data.publishStatus;
+
   return (
     <div className="space-y-6">
+      {ps.stale && (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
+          <p className="flex-1">
+            <strong>Ada perubahan sejak publikasi terakhir.</strong> Hasil di aplikasi mobile masih
+            memakai snapshot lama
+            {ps.lastPublishedAt ? ` (dipublikasikan ${formatDate(ps.lastPublishedAt)})` : ""}.
+            Jalankan &amp; publikasikan ulang agar perubahan diterapkan.
+          </p>
+          <Link
+            to={paths.calculation}
+            className="rounded-md bg-warning px-3 py-1.5 text-xs font-semibold text-warning-foreground hover:opacity-90"
+          >
+            Ke Kalkulasi
+          </Link>
+        </div>
+      )}
+      {!ps.published && (
+        <div className="flex items-center gap-3 rounded-lg border border-info/30 bg-info/10 p-3 text-sm">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-info" />
+          <p className="flex-1">
+            Belum ada hasil yang dipublikasikan — aplikasi mobile masih kosong. Jalankan kalkulasi
+            lalu publikasikan.
+          </p>
+          <Link
+            to={paths.calculation}
+            className="rounded-md border border-info px-3 py-1.5 text-xs font-semibold text-info hover:bg-info/10"
+          >
+            Ke Kalkulasi
+          </Link>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {STATS.map((s) => (
           <Card key={s.key}>

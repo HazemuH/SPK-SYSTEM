@@ -18,6 +18,12 @@ export interface RunSummary {
   results: ProfileSummary[];
 }
 
+export interface PublishStatus {
+  published: boolean;
+  lastPublishedAt: string | null;
+  stale: boolean;
+}
+
 export interface DashboardSummary {
   totalToys: number;
   totalCriteria: number;
@@ -26,6 +32,7 @@ export interface DashboardSummary {
   categoryDistribution: { name: string; count: number }[];
   top5: { name: string; score: number }[];
   recentSessions: RunSummary[];
+  publishStatus: PublishStatus;
 }
 
 export const dashboardApi = {
