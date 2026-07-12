@@ -1,13 +1,16 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Calculator, Info } from "lucide-react";
+import { Calculator, Info, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
 import { WeightBar } from "@/components/ui/weight-bar";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { getApiErrorMessage } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
+import { comparisonSentence, deriveWeights, saatyScale, snapToSaaty } from "@/lib/ahp";
 import type { Criterion } from "@/pages/criteria/criteria-api";
 import { criteriaApi } from "@/pages/criteria/criteria-api";
 import {
@@ -16,17 +19,12 @@ import {
   type WeightProfile,
 } from "@/pages/weight-profiles/weight-profiles-api";
 
-/** Saaty scale options (A more important … equal … B more important). */
-const SCALE = [9, 7, 5, 3, 1, 1 / 3, 1 / 5, 1 / 7, 1 / 9];
-
 const fraction = (v: number) => (v >= 1 ? String(Math.round(v)) : `1/${Math.round(1 / v)}`);
-
-/** Snap a raw ratio to the nearest allowed Saaty value (log distance). */
-function snap(d: number): number {
-  return SCALE.reduce((best, opt) =>
-    Math.abs(Math.log(opt) - Math.log(d)) < Math.abs(Math.log(best) - Math.log(d)) ? opt : best,
+const indexOfValue = (v: number) =>
+  Math.max(
+    0,
+    saatyScale.findIndex((s) => Math.abs(s - v) < 1e-6),
   );
-}
 
 export function PairwisePage() {
   const [params] = useSearchParams();
@@ -40,6 +38,7 @@ export function PairwisePage() {
 
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [matrix, setMatrix] = useState<Record<string, number>>({}); // "i-j" (i<j) → value
+  const [selectedPair, setSelectedPair] = useState<[number, number]>([0, 1]);
   const [result, setResult] = useState<WeightProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [computing, setComputing] = useState(false);
@@ -50,21 +49,26 @@ export function PairwisePage() {
   const code = selectedCode ?? params.get("profile") ?? profiles?.[0]?.code ?? null;
   const profile = useMemo(() => profiles?.find((p) => p.code === code), [profiles, code]);
 
-  // Seed the editable matrix from the profile's current weights (a coherent starting point).
-  useEffect(() => {
-    if (!profile || !criteria) return;
+  // A coherent starting point derived from the profile's current weights.
+  const presetFromWeights = useMemo(() => {
+    if (!profile || !criteria) return {};
     const next: Record<string, number> = {};
     for (let i = 0; i < criteria.length; i++) {
       for (let j = i + 1; j < criteria.length; j++) {
         const wi = profile.weights[criteria[i].code] ?? 0.01;
         const wj = profile.weights[criteria[j].code] ?? 0.01;
-        next[`${i}-${j}`] = snap(wi / wj);
+        next[`${i}-${j}`] = snapToSaaty(wi / wj);
       }
     }
-    setMatrix(next);
+    return next;
+  }, [profile, criteria]);
+
+  useEffect(() => {
+    setMatrix(presetFromWeights);
+    setSelectedPair([0, 1]);
     setResult(null);
     setError(null);
-  }, [profile, criteria]);
+  }, [presetFromWeights]);
 
   if (profilesQuery.isLoading || criteriaQuery.isLoading)
     return (
@@ -90,6 +94,15 @@ export function PairwisePage() {
     if (i < j) return matrix[`${i}-${j}`] ?? 1;
     return 1 / (matrix[`${j}-${i}`] ?? 1);
   };
+
+  // Live consistency preview over the current (unsaved) matrix.
+  const full = criteria.map((_, i) => criteria.map((_, j) => cellValue(i, j)));
+  const live = deriveWeights(full);
+
+  const [si, sj] = selectedPair;
+  const selValue = matrix[`${si}-${sj}`] ?? 1;
+
+  const setPairValue = (v: number) => setMatrix((m) => ({ ...m, [`${si}-${sj}`]: v }));
 
   async function handleCompute() {
     if (!criteria) return;
@@ -124,25 +137,73 @@ export function PairwisePage() {
           <button
             key={p.code}
             onClick={() => setSelectedCode(p.code)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+            className={cn(
+              "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
               p.code === profile.code
                 ? "border-primary bg-primary/10 text-primary"
-                : "border-border text-muted-foreground hover:bg-accent"
-            }`}
+                : "border-border text-muted-foreground hover:bg-accent",
+            )}
           >
             {p.name}
           </button>
         ))}
       </div>
 
-      <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+      <div className="flex items-start gap-2 rounded-lg border border-info/30 bg-info/10 p-3 text-sm">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-info" />
         <p>
-          Pairwise <strong>hanya antar kriteria</strong> (skala Saaty 1–9). Isi segitiga atas —
-          kebalikannya otomatis. Alternatif TIDAK di-pairwise (dinilai rating 1–5, disintesis SAW).
+          <strong>Klik satu sel</strong> di tabel, lalu geser slider di bawah untuk menentukan mana
+          yang lebih penting — tanpa perlu paham angka pecahan. Perbandingan{" "}
+          <strong>hanya antar kriteria</strong>; kebalikannya otomatis. Alternatif dinilai rating
+          1–5 (SAW).
         </p>
       </div>
 
+      {/* ── The pairwise editor: friendly slider + live sentence + live CR ── */}
+      <Card>
+        <CardContent className="space-y-4 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-medium text-muted-foreground">
+              Membandingkan:{" "}
+              <span className="font-semibold text-foreground">{criteria[si].name}</span>
+              {" ⟷ "}
+              <span className="font-semibold text-foreground">{criteria[sj].name}</span>
+            </p>
+            <ConsistencyBadge cr={live.cr} consistent={live.consistent} live />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="w-28 truncate text-right text-xs font-semibold text-destructive">
+              {criteria[sj].name} menang
+            </span>
+            <Slider
+              value={indexOfValue(selValue)}
+              max={saatyScale.length - 1}
+              onChange={(idx) => setPairValue(saatyScale[idx])}
+              aria-label={`Bandingkan ${criteria[si].name} dengan ${criteria[sj].name}`}
+            />
+            <span className="w-28 truncate text-xs font-semibold text-primary">
+              {criteria[si].name} menang
+            </span>
+          </div>
+
+          <p className="text-center text-sm">
+            <span className="font-semibold">
+              {comparisonSentence(criteria[si].name, criteria[sj].name, selValue)}
+            </span>
+            <span className="ml-1 text-muted-foreground">({fraction(selValue)})</span>
+          </p>
+
+          <div className="flex justify-center">
+            <Button variant="outline" size="sm" onClick={() => setMatrix(presetFromWeights)}>
+              <RotateCcw className="h-3.5 w-3.5" />
+              Terapkan preset profil
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Matrix overview: click a cell to edit it above ── */}
       <Card>
         <CardContent className="overflow-x-auto p-3">
           <table className="border-collapse text-xs">
@@ -171,7 +232,8 @@ export function PairwisePage() {
                       key={j}
                       value={cellValue(i, j)}
                       editable={i < j}
-                      onChange={(v) => setMatrix((m) => ({ ...m, [`${i}-${j}`]: v }))}
+                      selected={i === si && j === sj}
+                      onSelect={() => setSelectedPair([i, j])}
                     />
                   ))}
                 </tr>
@@ -181,7 +243,8 @@ export function PairwisePage() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-3">
+        <ConsistencyBadge cr={live.cr} consistent={live.consistent} live />
         <Button size="lg" onClick={handleCompute} disabled={computing}>
           <Calculator className="h-4 w-4" />
           {computing ? "Menghitung…" : "Hitung Bobot & CR"}
@@ -195,17 +258,36 @@ export function PairwisePage() {
   );
 }
 
+function ConsistencyBadge({
+  cr,
+  consistent,
+  live,
+}: {
+  cr: number;
+  consistent: boolean;
+  live?: boolean;
+}) {
+  return (
+    <Badge variant={consistent ? "default" : "destructive"}>
+      {live ? "Perkiraan: " : ""}
+      {consistent ? "Konsisten ✓" : "Belum konsisten"} (CR {cr.toFixed(2)})
+    </Badge>
+  );
+}
+
 function MatrixCell({
   value,
   editable,
-  onChange,
+  selected,
+  onSelect,
 }: {
   value: number;
   editable: boolean;
-  onChange: (v: number) => void;
+  selected: boolean;
+  onSelect: () => void;
 }) {
+  const equal = Math.abs(value - 1) < 1e-9;
   if (!editable) {
-    const equal = Math.abs(value - 1) < 1e-9;
     return (
       <td className="border border-border bg-muted/40 p-1 text-center text-muted-foreground">
         {equal ? "1" : fraction(value)}
@@ -214,25 +296,23 @@ function MatrixCell({
   }
   // Tint by strength (indigo = row favored, red = col favored).
   const strength = Math.min(1, Math.abs(Math.log(value)) / Math.log(9));
-  const tint =
-    Math.abs(value - 1) < 1e-9
-      ? undefined
-      : value > 1
-        ? `rgba(79,70,229,${0.08 + strength * 0.28})`
-        : `rgba(239,68,68,${0.08 + strength * 0.28})`;
+  const tint = equal
+    ? undefined
+    : value > 1
+      ? `rgba(79,70,229,${0.08 + strength * 0.28})`
+      : `rgba(239,68,68,${0.08 + strength * 0.28})`;
   return (
     <td className="border border-border p-0.5 text-center" style={{ background: tint }}>
-      <select
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full cursor-pointer bg-transparent text-center text-xs font-semibold outline-none"
+      <button
+        onClick={onSelect}
+        className={cn(
+          "w-full rounded px-1 py-1 text-xs font-semibold transition-colors hover:bg-accent",
+          selected && "ring-2 ring-primary ring-offset-1 ring-offset-card",
+        )}
+        title="Klik untuk mengatur pasangan ini"
       >
-        {SCALE.map((v) => (
-          <option key={v} value={v}>
-            {fraction(v)}
-          </option>
-        ))}
-      </select>
+        {fraction(value)}
+      </button>
     </td>
   );
 }
