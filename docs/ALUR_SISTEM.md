@@ -207,8 +207,24 @@ Data awal (8 kategori, 10 kriteria, 5 profil, 50 mainan) **diisi otomatis** oleh
 | AHP (pairwise → bobot → CR) | ✅ berjalan & teruji |
 | SAW (normalisasi → weighted sum → ranking) | ✅ berjalan & teruji |
 | CRUD data + kalkulasi + arsip laporan | ✅ |
-| "Publish" sebagai **gerbang** ke mobile | ⚠️ **belum ditegakkan** — mobile kini baca data *live*; idealnya mobile hanya baca snapshot terpublish sampai admin publish ulang |
-| Blokir profil dengan CR > 0,10 dari kalkulasi | ⚠️ baru diperingatkan, belum diblokir keras |
+| "Publish" sebagai **gerbang** ke mobile | ✅ **ditegakkan** — mobile hanya membaca snapshot **terpublish**; edit admin tak terlihat sampai jalankan + publikasikan ulang |
+| Blokir profil dengan CR > 0,10 dari kalkulasi | ✅ `run()` **menolak** (400) bila precheck gagal (CR>0,10 / mainan belum dinilai) |
+| Kriteria non-aktif ikut perhitungan | ✅ dikecualikan — hanya kriteria **aktif** yang dipakai AHP-SAW & tampil di mobile |
 
-> Dua item ⚠️ di atas adalah penyempurnaan yang membuat alur benar-benar sesuai narasi SPK
-> (compute → validasi → publish → konsumsi). Direkomendasikan dikerjakan sebelum sidang.
+### 10a. Gerbang publish (cara kerja)
+
+Saat **Kalkulasi (run)**, sistem membekukan *matriks keputusan* ke sesi itu: kriteria + tipe,
+matriks ternormalisasi r_ij, bobot AHP per profil, dan ranking/skor. **API publik (mobile) membaca
+sesi terpublish terbaru** dari snapshot beku ini — bukan data live. Atribut tampilan mainan
+(nama/harga/stok) tetap diambil live per mainan, sehingga harga/stok terkini tetap tampil sementara
+*keputusannya* (skor & ranking) beku.
+
+Konsekuensi (alur toko nyata):
+- Admin edit rating/harga/kriteria → **tidak langsung** ke mobile. Harus **Kalkulasi + Publikasikan
+  ulang** agar perubahan konsumsi.
+- Mainan/kriteria yang ditambah setelah publish **tak muncul** sampai publish ulang; yang dihapus
+  otomatis hilang dari tampilan.
+- Belum ada sesi terpublish → mobile kosong ("Hasil belum dipublikasikan").
+
+> Terverifikasi end-to-end (PostgreSQL): skor mainan tetap beku saat rating diubah admin, lalu
+> berubah setelah publikasi ulang; kalkulasi dengan CR>0,10 ditolak 400.
