@@ -18,6 +18,9 @@ public interface CriterionRepository extends JpaRepository<CriterionEntity, Long
     @Query("select coalesce(max(c.no), 0) from CriterionEntity c")
     int maxNo();
 
+    @Query("select max(c.updatedAt) from CriterionEntity c")
+    java.time.Instant maxUpdatedAt();
+
     /** Remove this criterion's ratings from every toy (element-collection table). */
     @Modifying
     @Query(value = "DELETE FROM toy_scores WHERE criterion_code = :code", nativeQuery = true)

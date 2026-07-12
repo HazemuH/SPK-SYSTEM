@@ -8,6 +8,9 @@ public final class CalculationDto {
 
     private CalculationDto() {}
 
+    /** Whether a published snapshot exists and whether data changed since it was published. */
+    public record PublishStatus(boolean published, Instant lastPublishedAt, boolean stale) {}
+
     public record PrecheckItem(String label, boolean ok, String detail) {}
 
     public record PrecheckResponse(boolean allOk, List<PrecheckItem> items) {}

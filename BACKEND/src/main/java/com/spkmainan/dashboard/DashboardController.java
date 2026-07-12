@@ -1,5 +1,6 @@
 package com.spkmainan.dashboard;
 
+import com.spkmainan.calculation.CalculationDto.PublishStatus;
 import com.spkmainan.calculation.CalculationDto.RunSummary;
 import com.spkmainan.calculation.CalculationService;
 import com.spkmainan.domain.DomainCatalog;
@@ -35,7 +36,7 @@ public class DashboardController {
     public record Summary(
             int totalToys, int totalCriteria, int totalCategories, int totalProfiles,
             List<CategorySlice> categoryDistribution, List<TopToy> top5,
-            List<RunSummary> recentSessions) {}
+            List<RunSummary> recentSessions, PublishStatus publishStatus) {}
 
     @GetMapping("/summary")
     public Summary summary() {
@@ -48,6 +49,7 @@ public class DashboardController {
         List<RunSummary> recent = calculations.list().stream().limit(5).toList();
 
         return new Summary(catalog.toys().size(), catalog.criteria().size(),
-            catalog.categories().size(), catalog.profiles().size(), dist, top5, recent);
+            catalog.categories().size(), catalog.profiles().size(), dist, top5, recent,
+            calculations.publishStatus());
     }
 }

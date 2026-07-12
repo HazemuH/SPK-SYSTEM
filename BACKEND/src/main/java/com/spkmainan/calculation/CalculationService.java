@@ -3,6 +3,10 @@ package com.spkmainan.calculation;
 import com.spkmainan.ahp.SawEngine;
 import com.spkmainan.calculation.CalculationDto.PrecheckItem;
 import com.spkmainan.calculation.CalculationDto.PrecheckResponse;
+import com.spkmainan.calculation.CalculationDto.PublishStatus;
+import com.spkmainan.criterion.CriterionRepository;
+import com.spkmainan.toy.ToyRepository;
+import com.spkmainan.weightprofile.WeightProfileRepository;
 import com.spkmainan.calculation.CalculationDto.ProfileDetail;
 import com.spkmainan.calculation.CalculationDto.ProfileSummary;
 import com.spkmainan.calculation.CalculationDto.RankingRow;
@@ -33,11 +37,44 @@ public class CalculationService {
     private final CalculationRunRepository runs;
     private final DomainCatalog catalog;
     private final SawEngine saw;
+    private final ToyRepository toyRepo;
+    private final CriterionRepository criterionRepo;
+    private final WeightProfileRepository profileRepo;
 
-    public CalculationService(CalculationRunRepository runs, DomainCatalog catalog, SawEngine saw) {
+    public CalculationService(CalculationRunRepository runs, DomainCatalog catalog, SawEngine saw,
+                              ToyRepository toyRepo, CriterionRepository criterionRepo,
+                              WeightProfileRepository profileRepo) {
         this.runs = runs;
         this.catalog = catalog;
         this.saw = saw;
+        this.toyRepo = toyRepo;
+        this.criterionRepo = criterionRepo;
+        this.profileRepo = profileRepo;
+    }
+
+    /**
+     * Whether a published snapshot exists and whether admin data changed since it was published
+     * (so the admin knows to re-run + re-publish). "Stale" if any toy/criterion/profile was edited
+     * after publish, or the active toy/criteria counts diverged from the published snapshot.
+     */
+    @Transactional(readOnly = true)
+    public PublishStatus publishStatus() {
+        var published = runs.findFirstByPublishedTrueOrderByPublishedAtDesc();
+        if (published.isEmpty()) {
+            return new PublishStatus(false, null, false);
+        }
+        CalculationRun run = published.get();
+        Instant at = run.getPublishedAt();
+        boolean edited = isAfter(toyRepo.maxUpdatedAt(), at)
+            || isAfter(criterionRepo.maxUpdatedAt(), at)
+            || isAfter(profileRepo.maxUpdatedAt(), at);
+        boolean countsChanged = catalog.activeToys().size() != run.getAltCount()
+            || catalog.activeCriteria().size() != run.getCriteria().size();
+        return new PublishStatus(true, at, edited || countsChanged);
+    }
+
+    private static boolean isAfter(Instant candidate, Instant reference) {
+        return candidate != null && reference != null && candidate.isAfter(reference);
     }
 
     // ── pre-check ────────────────────────────────────────────────────────
