@@ -178,8 +178,11 @@ public class CatalogService {
         List<CategoryView> cats = catalog.categories().stream()
             .map(c -> new CategoryView(c.id(), c.name(), c.description(), catalog.categoryCount(c.id())))
             .toList();
+        var lastPublishedAt = runs.findFirstByPublishedTrueOrderByPublishedAtDesc()
+            .map(CalculationRun::getPublishedAt).orElse(null);
         return new Meta(cats, s.criteria().stream().map(this::criterionView).toList(),
-            SORT_OPTIONS, s.profiles().values().stream().map(this::profileView).toList());
+            SORT_OPTIONS, s.profiles().values().stream().map(this::profileView).toList(),
+            lastPublishedAt);
     }
 
     @Transactional(readOnly = true)

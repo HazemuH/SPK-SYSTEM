@@ -37,9 +37,15 @@ class CategoryOption extends Equatable {
   List<Object?> get props => [id, name, count];
 }
 
-/// Reference data for the mobile app (`Meta`): categories, criteria, sort options.
+/// Reference data for the mobile app (`Meta`): categories, criteria, sort options,
+/// and when the published snapshot was last updated (for the "Diperbarui" cue).
 class Meta extends Equatable {
-  const Meta({required this.categories, required this.criteria, required this.sortOptions});
+  const Meta({
+    required this.categories,
+    required this.criteria,
+    required this.sortOptions,
+    this.lastPublishedAt,
+  });
 
   factory Meta.fromJson(Map<String, dynamic> json) {
     List<T> parse<T>(String key, T Function(Map<String, dynamic>) f) =>
@@ -48,6 +54,7 @@ class Meta extends Equatable {
       categories: parse('categories', CategoryOption.fromJson),
       criteria: parse('criteria', Criterion.fromJson),
       sortOptions: parse('sortOptions', SortOption.fromJson),
+      lastPublishedAt: DateTime.tryParse(json['lastPublishedAt']?.toString() ?? ''),
     );
   }
 
@@ -55,6 +62,9 @@ class Meta extends Equatable {
   final List<Criterion> criteria;
   final List<SortOption> sortOptions;
 
+  /// When the admin last published the AHP-SAW result (null = never published).
+  final DateTime? lastPublishedAt;
+
   @override
-  List<Object?> get props => [categories, criteria, sortOptions];
+  List<Object?> get props => [categories, criteria, sortOptions, lastPublishedAt];
 }

@@ -26,24 +26,24 @@ class _Question {
 /// Static preference filters. The final "paling penting?" step is dynamic —
 /// its options are the published AHP weight profiles (see [publishedProfilesProvider]).
 const _quiz = <_Question>[
-  _Question('usia', 'Usia si kecil?', 'Mainan di luar rentang usia disembunyikan', [
+  _Question('usia', 'Berapa usia si kecil?', 'Biar kami tampilkan mainan yang pas untuk usianya 🎈', [
     ['0-2', '0–2 tahun', '👶'],
     ['3-5', '3–5 tahun', '🧒'],
     ['6-8', '6–8 tahun', '🧑'],
     ['9-12', '9–12 tahun', '👦'],
     ['13+', '13+ tahun', '🧑‍🎓'],
   ]),
-  _Question('budget', 'Budget?', 'Hanya mainan dalam budget yang tampil', [
-    ['100000', '< Rp100rb', '💸'],
+  _Question('budget', 'Berapa kira-kira budget-mu?', 'Tenang, kami sesuaikan dengan anggaranmu', [
+    ['100000', 'Di bawah Rp100rb', '💸'],
     ['300000', 'Rp100–300rb', '💰'],
     ['500000', 'Rp300–500rb', '💳'],
-    ['99999999', 'Tanpa batas', '🏆'],
+    ['99999999', 'Berapa pun oke', '🏆'],
   ]),
-  _Question('tujuan', 'Tujuan utama?', 'Memprioritaskan kategori relevan', [
+  _Question('tujuan', 'Lagi cari mainan untuk apa?', 'Kami utamakan jenis yang paling cocok', [
     ['edukatif', 'Belajar & Edukatif', '📚'],
     ['aktif', 'Aktif & Bergerak', '⚽'],
-    ['kreatif', 'Kreasi & Seni', '🎨'],
-    ['hiburan', 'Hiburan & Fun', '🎮'],
+    ['kreatif', 'Berkreasi & Seni', '🎨'],
+    ['hiburan', 'Seru-seruan & Hiburan', '🎮'],
   ]),
 ];
 
@@ -224,11 +224,11 @@ class _RecommendationScreenState extends ConsumerState<RecommendationScreen> {
                   AppSpacing.md,
                 ),
                 children: [
-                  Text('Paling penting?', style: AppTypography.headlineSmall),
+                  Text('Apa yang paling kamu utamakan?', style: AppTypography.headlineSmall),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Pilih skenario penilaian. Bobotnya berasal dari perbandingan AHP '
-                    'yang sudah divalidasi admin — pilihanmu menentukan ranking.',
+                    'Pilih satu fokus — kami urutkan rekomendasinya sesuai itu. '
+                    'Setiap pilihan sudah dihitung dengan metode AHP.',
                     style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -275,8 +275,8 @@ class _RecommendationScreenState extends ConsumerState<RecommendationScreen> {
             children: [
               const AppEmptyState(
                 icon: Icons.search_off,
-                title: 'Tidak ada mainan cocok',
-                subtitle: 'Coba longgarkan preferensimu.',
+                title: 'Belum ada yang pas nih',
+                subtitle: 'Coba ubah sedikit pilihanmu, ya 🙂',
               ),
               Padding(
                 padding: const EdgeInsets.all(AppSpacing.md),

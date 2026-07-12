@@ -30,7 +30,8 @@ public final class PublicDto {
 
     public record Meta(
             List<CategoryView> categories, List<CriterionView> criteria,
-            List<SortOption> sortOptions, List<ProfileView> profiles) {}
+            List<SortOption> sortOptions, List<ProfileView> profiles,
+            java.time.Instant lastPublishedAt) {}
 
     public record ToyDetail(
             RankedToy ranked, int globalRank, int categoryRank, int categoryTotal,

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/utils/formatter.dart';
 import '../../../routing/routes.dart';
+import '../../catalog/view_model/catalog_providers.dart';
 import '../../core/themes/colors.dart';
 import '../../core/themes/spacing.dart';
 import '../../core/themes/typography.dart';
@@ -169,6 +171,7 @@ class _TopSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(topToysProvider);
+    final lastPublished = ref.watch(metaProvider).asData?.value.lastPublishedAt;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -179,6 +182,13 @@ class _TopSection extends ConsumerWidget {
               const Text('⭐', style: TextStyle(fontSize: 16)),
               const SizedBox(width: AppSpacing.xs),
               Text('Top Rekomendasi', style: AppTypography.labelLarge),
+              if (lastPublished != null) ...[
+                const Spacer(),
+                Text(
+                  'Diperbarui ${Formatter.formatDate(lastPublished)}',
+                  style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                ),
+              ],
             ],
           ),
         ),
