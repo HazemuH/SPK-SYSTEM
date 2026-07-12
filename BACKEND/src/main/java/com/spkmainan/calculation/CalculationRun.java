@@ -33,6 +33,12 @@ public class CalculationRun extends BaseEntity {
     @OneToMany(mappedBy = "run", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CalculationResult> results = new ArrayList<>();
 
+    @OneToMany(mappedBy = "run", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CalculationCriterion> criteria = new ArrayList<>();
+
+    @OneToMany(mappedBy = "run", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CalculationNorm> norms = new ArrayList<>();
+
     protected CalculationRun() {
     }
 
@@ -45,6 +51,24 @@ public class CalculationRun extends BaseEntity {
     public void addResult(CalculationResult result) {
         result.setRun(this);
         results.add(result);
+    }
+
+    public void addCriterion(CalculationCriterion criterion) {
+        criterion.setRun(this);
+        criteria.add(criterion);
+    }
+
+    public void addNorm(CalculationNorm norm) {
+        norm.setRun(this);
+        norms.add(norm);
+    }
+
+    public List<CalculationCriterion> getCriteria() {
+        return criteria;
+    }
+
+    public List<CalculationNorm> getNorms() {
+        return norms;
     }
 
     public String getCode() {

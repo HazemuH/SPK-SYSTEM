@@ -44,8 +44,17 @@ public class CalculationResult extends BaseEntity {
     @Column(name = "best_toy_name")
     private String bestToyName;
 
+    @Column(name = "short_name")
+    private String shortName;
+
+    @Column(name = "icon", length = 50)
+    private String icon;
+
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RankingEntry> rankings = new ArrayList<>();
+
+    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CalculationWeight> weights = new ArrayList<>();
 
     protected CalculationResult() {
     }
@@ -111,5 +120,30 @@ public class CalculationResult extends BaseEntity {
 
     public List<RankingEntry> getRankings() {
         return rankings;
+    }
+
+    public String getShortName() {
+        return shortName;
+    }
+
+    public void setShortName(String shortName) {
+        this.shortName = shortName;
+    }
+
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
+    }
+
+    public void addWeight(CalculationWeight weight) {
+        weight.setResult(this);
+        weights.add(weight);
+    }
+
+    public List<CalculationWeight> getWeights() {
+        return weights;
     }
 }
