@@ -189,6 +189,14 @@ public class CalculationService {
         return summary(runs.save(run));
     }
 
+    /** Withdraw a published session so the mobile app shows no published result until re-published. */
+    @Transactional
+    public RunSummary unpublish(Long id) {
+        CalculationRun run = getOrThrow(id);
+        run.setPublished(false);
+        return summary(runs.save(run));
+    }
+
     // ── read ───────────────────────────────────────────────────────────────
     @Transactional(readOnly = true)
     public List<RunSummary> list() {

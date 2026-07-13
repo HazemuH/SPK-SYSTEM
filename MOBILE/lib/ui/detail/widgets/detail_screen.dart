@@ -11,6 +11,7 @@ import '../../core/themes/colors.dart';
 import '../../core/themes/spacing.dart';
 import '../../core/themes/typography.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/app_empty_state.dart';
 import '../../core/widgets/app_error_view.dart';
 import '../../core/widgets/app_loading.dart';
 import '../../core/widgets/screen_wrapper.dart';
@@ -36,7 +37,13 @@ class DetailScreen extends ConsumerWidget {
           message: 'Gagal memuat detail.',
           onRetry: () => ref.invalidate(toyDetailProvider(toyId)),
         ),
-        data: (detail) => _DetailBody(detail: detail, criteria: criteria),
+        data: (detail) => detail.normalized.isEmpty
+            ? const AppEmptyState(
+                icon: Icons.inventory_2_outlined,
+                title: 'Detail belum tersedia',
+                subtitle: 'Hasil AHP belum dipublikasikan admin.',
+              )
+            : _DetailBody(detail: detail, criteria: criteria),
       ),
     );
   }

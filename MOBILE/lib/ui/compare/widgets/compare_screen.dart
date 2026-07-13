@@ -11,6 +11,7 @@ import '../../core/themes/spacing.dart';
 import '../../core/themes/typography.dart';
 import '../../core/widgets/app_button.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/app_empty_state.dart';
 import '../../core/widgets/app_error_view.dart';
 import '../../core/widgets/app_loading.dart';
 import '../view_model/compare_providers.dart';
@@ -65,7 +66,13 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
               message: 'Gagal memuat daftar mainan.',
               onRetry: () => ref.invalidate(catalogProvider(const CatalogParams())),
             ),
-            data: (items) => ListView.separated(
+            data: (items) => items.isEmpty
+                ? const AppEmptyState(
+                    icon: Icons.inventory_2_outlined,
+                    title: 'Belum ada mainan',
+                    subtitle: 'Hasil AHP belum dipublikasikan admin.',
+                  )
+                : ListView.separated(
               padding: const EdgeInsets.all(AppSpacing.md),
               itemCount: items.length,
               separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),

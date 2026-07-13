@@ -32,6 +32,15 @@ export function CalculationPage() {
     },
   });
 
+  const unpublishMutation = useMutation({
+    mutationFn: (id: number) => calculationsApi.unpublish(id),
+    onSuccess: (data) => {
+      setRun(data);
+      void queryClient.invalidateQueries({ queryKey: ["calculations"] });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
+    },
+  });
+
   const step = run ? 2 : 0;
 
   return (
@@ -172,7 +181,7 @@ export function CalculationPage() {
                   </p>
                 </div>
               </div>
-              {!run.published && (
+              {!run.published ? (
                 <Button
                   size="lg"
                   disabled={publishMutation.isPending}
@@ -180,6 +189,15 @@ export function CalculationPage() {
                 >
                   <Upload className="h-4 w-4" />
                   {publishMutation.isPending ? "Mempublikasikan…" : "Publikasikan"}
+                </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  disabled={unpublishMutation.isPending}
+                  onClick={() => unpublishMutation.mutate(run.id)}
+                >
+                  {unpublishMutation.isPending ? "Menarik…" : "Tarik Publikasi"}
                 </Button>
               )}
             </CardContent>

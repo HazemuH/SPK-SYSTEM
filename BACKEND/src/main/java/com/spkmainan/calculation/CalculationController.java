@@ -44,6 +44,12 @@ public class CalculationController {
         return service.publish(id);
     }
 
+    @PostMapping("/{id}/unpublish")
+    @Operation(summary = "Withdraw a published session (mobile shows no result until re-published)")
+    public RunSummary unpublish(@PathVariable Long id) {
+        return service.unpublish(id);
+    }
+
     @GetMapping
     @Operation(summary = "List calculation sessions (reports)")
     public List<RunSummary> list() {

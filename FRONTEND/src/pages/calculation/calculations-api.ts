@@ -70,6 +70,10 @@ export const calculationsApi = {
     const { data } = await apiClient.post<RunSummary>(`/calculations/${id}/publish`);
     return data;
   },
+  async unpublish(id: number): Promise<RunSummary> {
+    const { data } = await apiClient.post<RunSummary>(`/calculations/${id}/unpublish`);
+    return data;
+  },
   async list(): Promise<RunSummary[]> {
     const { data } = await apiClient.get<RunSummary[]>("/calculations");
     return data;

@@ -90,6 +90,22 @@ class CalculationControllerTest {
 
     @Test
     @WithMockUser
+    void publish_thenUnpublish_marksSessionUnpublished() throws Exception {
+        String runJson = mockMvc.perform(post("/calculations/run"))
+            .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        long id = objectMapper.readTree(runJson).get("id").asLong();
+
+        mockMvc.perform(post("/calculations/" + id + "/publish"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.published").value(true));
+
+        mockMvc.perform(post("/calculations/" + id + "/unpublish"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.published").value(false));
+    }
+
+    @Test
+    @WithMockUser
     void run_thenPublish_thenDetail() throws Exception {
         // run → 5 profile results
         String runJson = mockMvc.perform(post("/calculations/run"))
