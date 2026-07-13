@@ -65,7 +65,7 @@ export function SettingsPage() {
         <Card className="max-w-2xl">
           <CardContent className="space-y-4 py-6">
             <div>
-              <p className="text-lg font-bold">SPK Mainan Anak</p>
+              <p className="text-lg font-bold">KIDORA — Pemilihan Mainan Anak</p>
               <p className="text-sm text-muted-foreground">Versi 1.0.0 · Metode AHP-SAW</p>
             </div>
             <p className="text-sm leading-relaxed text-muted-foreground">

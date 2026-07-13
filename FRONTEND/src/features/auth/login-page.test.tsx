@@ -7,7 +7,7 @@ import { LoginPage } from "./login-page";
 describe("LoginPage", () => {
   it("renders the login form", () => {
     renderWithProviders(<LoginPage />, { route: "/login" });
-    expect(screen.getByRole("heading", { name: /masuk ke spk mainan/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /masuk ke kidora/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Masuk" })).toBeInTheDocument();
   });
 

@@ -2,7 +2,7 @@
 class AppConfig {
   AppConfig._();
 
-  static const String appName = 'SPK Mainan';
+  static const String appName = 'KIDORA';
   static const String appVersion = '1.0.0';
 
   static const Duration splashDuration = Duration(milliseconds: 1500);

@@ -43,7 +43,7 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Masuk ke SPK Mainan</CardTitle>
+          <CardTitle>Masuk ke KIDORA</CardTitle>
           <CardDescription>Panel admin manajemen mainan &amp; metode SPK</CardDescription>
         </CardHeader>
         <CardContent>

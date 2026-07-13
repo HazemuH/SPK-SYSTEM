@@ -9,7 +9,7 @@ export function Topbar() {
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
-      <div className="font-semibold md:hidden">SPK Mainan</div>
+      <div className="font-semibold md:hidden">KIDORA</div>
       <div className="ml-auto flex items-center gap-4">
         <Button
           variant="outline"

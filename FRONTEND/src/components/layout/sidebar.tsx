@@ -8,9 +8,9 @@ export function Sidebar() {
     <aside className="hidden w-60 shrink-0 border-r border-border bg-card md:flex md:flex-col">
       <div className="flex h-16 items-center gap-2 border-b border-border px-6">
         <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
-          S
+          K
         </div>
-        <span className="font-semibold">SPK Mainan</span>
+        <span className="font-semibold">KIDORA</span>
       </div>
       <nav className="flex-1 space-y-1 p-3">
         {navItems.map((item) => (
