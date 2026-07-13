@@ -51,7 +51,10 @@ const criteria = [
 ];
 
 vi.mock("@/pages/weight-profiles/weight-profiles-api", () => ({
-  weightProfilesApi: { list: vi.fn().mockResolvedValue(profiles), computePairwise: vi.fn() },
+  weightProfilesApi: {
+    list: vi.fn().mockResolvedValue(profiles),
+    computePairwise: vi.fn().mockResolvedValue(profiles[0]),
+  },
 }));
 vi.mock("@/pages/criteria/criteria-api", () => ({
   criteriaApi: { list: vi.fn().mockResolvedValue(criteria) },
@@ -78,5 +81,12 @@ describe("PairwisePage", () => {
     expect(
       await screen.findByText(/Keamanan mutlak lebih penting dari Edukasi/),
     ).toBeInTheDocument();
+  });
+
+  it("shows a 'saved' banner after computing", async () => {
+    renderWithProviders(<PairwisePage />);
+    const compute = (await screen.findAllByRole("button", { name: /Hitung Bobot & CR/ }))[0];
+    fireEvent.click(compute);
+    expect(await screen.findByText(/berhasil disimpan/)).toBeInTheDocument();
   });
 });

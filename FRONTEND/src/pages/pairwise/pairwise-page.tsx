@@ -1,5 +1,13 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Calculator, ChevronLeft, ChevronRight, Info, RotateCcw, Table2 } from "lucide-react";
+import {
+  Calculator,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  RotateCcw,
+  Table2,
+} from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +64,14 @@ export function PairwisePage() {
   const [result, setResult] = useState<WeightProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [computing, setComputing] = useState(false);
+  const [savedMsg, setSavedMsg] = useState<string | null>(null);
+
+  // Auto-dismiss the "saved" banner after a few seconds.
+  useEffect(() => {
+    if (!savedMsg) return;
+    const t = setTimeout(() => setSavedMsg(null), 6000);
+    return () => clearTimeout(t);
+  }, [savedMsg]);
 
   const profiles = profilesQuery.data;
   const criteria = criteriaQuery.data;
@@ -73,6 +89,7 @@ export function PairwisePage() {
     setStep(0);
     setResult(null);
     setError(null);
+    setSavedMsg(null);
   }, [profile, criteria, seededCode]);
 
   if (profilesQuery.isLoading || criteriaQuery.isLoading)
@@ -99,8 +116,10 @@ export function PairwisePage() {
     if (i < j) return matrix[`${i}-${j}`] ?? 1;
     return 1 / (matrix[`${j}-${i}`] ?? 1);
   };
-  const setPair = (i: number, j: number, v: number) =>
+  const setPair = (i: number, j: number, v: number) => {
     setMatrix((m) => ({ ...m, [`${i}-${j}`]: v }));
+    setSavedMsg(null); // edits invalidate the "saved" state
+  };
 
   // Live consistency preview over the current (unsaved) matrix.
   const full = criteria.map((_, i) => criteria.map((_, j) => cellValue(i, j)));
@@ -127,6 +146,7 @@ export function PairwisePage() {
     try {
       const updated = await weightProfilesApi.computePairwise(profile!.id, entries);
       setResult(updated);
+      setSavedMsg(`Bobot untuk profil "${profile!.name}" berhasil disimpan.`);
       // Refresh the cached profiles, but keep the current matrix (do not re-seed).
       void queryClient.invalidateQueries({ queryKey: ["weight-profiles"] });
     } catch (err) {
@@ -190,6 +210,16 @@ export function PairwisePage() {
           </Button>
         </div>
       </div>
+
+      {savedMsg && (
+        <div className="flex items-center gap-2 rounded-lg border border-success/40 bg-success/10 p-3 text-sm text-success">
+          <Check className="h-4 w-4 shrink-0" />
+          <p className="font-medium">
+            {savedMsg} Bobot hasilnya ada di kartu <strong>Hasil Bobot</strong> di bawah — posisi
+            slider tetap sesuai isianmu.
+          </p>
+        </div>
+      )}
 
       {showMatrix && <MatrixTable criteria={criteria} cellValue={cellValue} />}
 
