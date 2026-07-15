@@ -1,0 +1,48 @@
+# Production overlay for the GCP e2-micro VM (1 GB RAM).
+# Use it alongside the base file:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# The e2-micro has only 1 GB RAM, so every service is capped and the JVM is told
+# to stay small. A swap file on the VM (see DEPLOY_GCP.md) absorbs build-time spikes.
+# The frontend's nginx already proxies /v1 to the backend same-origin, so there is
+# no CORS to configure and only port 80 is exposed to the internet.
+
+services:
+  db:
+    # Postgres is the memory floor of the stack; keep it lean.
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=64MB"
+      - "-c"
+      - "max_connections=20"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    restart: unless-stopped
+
+  backend:
+    environment:
+      # Cap the JVM heap/metaspace so Spring Boot fits alongside Postgres in 1 GB.
+      # -XX:MaxRAMPercentage is honored by the container-aware JRE.
+      JAVA_TOOL_OPTIONS: >-
+        -XX:MaxRAMPercentage=70
+        -Xss512k
+        -XX:+UseSerialGC
+        -XX:MaxMetaspaceSize=128m
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    restart: unless-stopped
+
+  frontend:
+    # Expose the site on the standard HTTP port (80) instead of 5173.
+    ports:
+      - "80:80"
+    deploy:
+      resources:
+        limits:
+          memory: 96M
+    restart: unless-stopped
