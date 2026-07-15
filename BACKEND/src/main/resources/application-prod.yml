@@ -2,7 +2,9 @@
 # All values come from environment variables so no secrets live in the repo.
 spring:
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/spk_mainan}
+    # Prefer an explicit DB_URL (e.g. docker-compose); otherwise build one from the
+    # discrete DB_HOST/DB_PORT/DB_NAME parts a managed provider (Render) exposes.
+    url: ${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:spk_mainan}}
     username: ${DB_USERNAME:spk_mainan}
     password: ${DB_PASSWORD:spk_mainan}
     driver-class-name: org.postgresql.Driver
