@@ -1,0 +1,38 @@
+# HTTPS overlay — adds Caddy in front for automatic TLS (Let's Encrypt).
+#
+# Use it alongside the base + prod files:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.https.yml up -d
+#
+# Requires DOMAIN in .env (e.g. DOMAIN=kidora.duckdns.org) pointing at this VM's external IP,
+# and firewall ports 80 + 443 open (GCP: "Allow HTTP traffic" + "Allow HTTPS traffic").
+#
+# Caddy terminates TLS on 80/443 and reverse-proxies to the frontend nginx container.
+# The frontend therefore no longer needs to publish port 80 to the internet.
+
+services:
+  frontend:
+    # Stop exposing the site directly; Caddy is the only public entrypoint now.
+    ports: !reset []
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+
+volumes:
+  caddy-data:
+  caddy-config:

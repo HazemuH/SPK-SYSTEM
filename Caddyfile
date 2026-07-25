@@ -1,0 +1,11 @@
+# Caddy reverse proxy — automatic HTTPS (Let's Encrypt) for the SPK Mainan stack.
+#
+# {$DOMAIN} is read from the environment (set it in .env, e.g. DOMAIN=kidora.duckdns.org).
+# Caddy obtains and renews a TLS certificate automatically and redirects http -> https.
+# It forwards everything to the existing frontend nginx container (which serves the SPA
+# and already proxies /v1 to the backend), so no nginx/backend change is needed.
+
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy frontend:80
+}
