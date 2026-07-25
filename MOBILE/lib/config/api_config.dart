@@ -4,12 +4,19 @@
 class ApiConfig {
   ApiConfig._();
 
-  // Android emulator reaches the host at 10.0.2.2; iOS simulator uses localhost.
-  // TODO: point this to the real backend host before going to production.
-  static const String baseUrl = 'http://10.0.2.2:8080/v1';
+  // Base URL is overridable at build time so the same code runs against the local
+  // emulator (default) or the deployed backend, e.g.:
+  //   flutter build apk --dart-define=API_BASE_URL=https://kidora.duckdns.org/v1
+  // Default: Android emulator reaches the host at 10.0.2.2 (iOS simulator: localhost).
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:8080/v1',
+  );
 
-  static const Duration connectTimeout = Duration(seconds: 30);
-  static const Duration receiveTimeout = Duration(seconds: 30);
+  // Generous timeouts: the free-tier VM can be slow to answer the first request
+  // after an idle period (JVM waking from swap on 1 GB RAM), so allow for that.
+  static const Duration connectTimeout = Duration(seconds: 60);
+  static const Duration receiveTimeout = Duration(seconds: 60);
 
   // Public endpoints (no auth).
   static const String top = '/public/top';

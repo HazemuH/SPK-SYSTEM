@@ -96,7 +96,7 @@ class _Header extends StatelessWidget {
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Text(
-                    'ToyAdvisor',
+                    'KIDORA',
                     style: AppTypography.headlineSmall.copyWith(color: AppColors.white),
                   ),
                 ],

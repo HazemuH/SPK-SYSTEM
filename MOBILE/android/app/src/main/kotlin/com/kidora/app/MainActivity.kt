@@ -1,4 +1,4 @@
-package com.example.spk_mainan
+package com.kidora.app
 
 import io.flutter.embedding.android.FlutterActivity
 
