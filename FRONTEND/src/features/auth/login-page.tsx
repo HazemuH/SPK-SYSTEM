@@ -77,11 +77,6 @@ export function LoginPage() {
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? "Memproses..." : "Masuk"}
             </Button>
-
-            <p className="text-center text-xs text-muted-foreground">
-              Demo: <span className="font-medium">admin</span> /{" "}
-              <span className="font-medium">password123</span>
-            </p>
           </form>
         </CardContent>
       </Card>

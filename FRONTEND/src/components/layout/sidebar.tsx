@@ -1,9 +1,13 @@
 import { NavLink } from "react-router-dom";
+import { useAuth } from "@/features/auth/use-auth";
 import { cn } from "@/lib/utils";
 import { paths } from "@/routes/paths";
 import { navItems } from "./nav-config";
 
 export function Sidebar() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const items = navItems.filter((item) => !item.adminOnly || isAdmin);
   return (
     <aside className="hidden w-60 shrink-0 border-r border-border bg-card md:flex md:flex-col">
       <div className="flex h-16 items-center gap-2 border-b border-border px-6">
@@ -13,7 +17,7 @@ export function Sidebar() {
         <span className="font-semibold">KIDORA</span>
       </div>
       <nav className="flex-1 space-y-1 p-3">
-        {navItems.map((item) => (
+        {items.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}

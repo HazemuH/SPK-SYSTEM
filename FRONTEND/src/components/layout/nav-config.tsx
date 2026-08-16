@@ -8,6 +8,7 @@ import {
   Calculator,
   Trophy,
   FileText,
+  Users,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -17,6 +18,8 @@ export interface NavItem {
   label: string;
   to: string;
   icon: LucideIcon;
+  /** When true, only users with the admin role see this item. */
+  adminOnly?: boolean;
 }
 
 /** Sidebar navigation — mirrors the design's 10 admin sections. */
@@ -30,5 +33,6 @@ export const navItems: NavItem[] = [
   { label: "Kalkulasi", to: paths.calculation, icon: Calculator },
   { label: "Hasil", to: paths.results, icon: Trophy },
   { label: "Laporan", to: paths.reports, icon: FileText },
+  { label: "Pengguna", to: paths.users, icon: Users, adminOnly: true },
   { label: "Pengaturan", to: paths.settings, icon: Settings },
 ];

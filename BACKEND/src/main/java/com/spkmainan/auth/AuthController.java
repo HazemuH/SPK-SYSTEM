@@ -1,7 +1,9 @@
 package com.spkmainan.auth;
 
+import com.spkmainan.auth.dto.ChangePasswordRequest;
 import com.spkmainan.auth.dto.LoginRequest;
 import com.spkmainan.auth.dto.LoginResponse;
+import com.spkmainan.auth.dto.UpdateProfileRequest;
 import com.spkmainan.security.AppUserDetails;
 import com.spkmainan.user.dto.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,5 +47,22 @@ public class AuthController {
     @Operation(summary = "Get the currently authenticated user")
     public ResponseEntity<UserResponse> profile(@AuthenticationPrincipal AppUserDetails principal) {
         return ResponseEntity.ok(authService.getProfile(principal.getUsername()));
+    }
+
+    @PutMapping("/profile")
+    @Operation(summary = "Update the current user's own profile")
+    public ResponseEntity<UserResponse> updateProfile(
+            @AuthenticationPrincipal AppUserDetails principal,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        return ResponseEntity.ok(authService.updateProfile(principal.getUsername(), request));
+    }
+
+    @PostMapping("/change-password")
+    @Operation(summary = "Change the current user's own password")
+    public ResponseEntity<Void> changePassword(
+            @AuthenticationPrincipal AppUserDetails principal,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(principal.getUsername(), request);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -11,6 +11,7 @@ import { ReportsPage } from "@/pages/reports/reports-page";
 import { ResultsPage } from "@/pages/results/results-page";
 import { SettingsPage } from "@/pages/settings/settings-page";
 import { ToysPage } from "@/pages/toys/toys-page";
+import { UsersPage } from "@/pages/users/users-page";
 import { WeightProfilesPage } from "@/pages/weight-profiles/weight-profiles-page";
 import { paths } from "./paths";
 
@@ -31,6 +32,7 @@ export const router = createBrowserRouter([
           { path: paths.calculation, element: <CalculationPage /> },
           { path: paths.results, element: <ResultsPage /> },
           { path: paths.reports, element: <ReportsPage /> },
+          { path: paths.users, element: <UsersPage /> },
           { path: paths.settings, element: <SettingsPage /> },
         ],
       },

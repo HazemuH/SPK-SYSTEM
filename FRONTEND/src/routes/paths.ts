@@ -10,5 +10,6 @@ export const paths = {
   calculation: "/calculation",
   results: "/results",
   reports: "/reports",
+  users: "/users",
   settings: "/settings",
 } as const;

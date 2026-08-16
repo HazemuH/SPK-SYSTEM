@@ -17,4 +17,13 @@ export const authApi = {
     const { data } = await apiClient.get<User>("/auth/profile");
     return data;
   },
+
+  async updateProfile(input: { name: string; email: string; avatarUrl?: string | null }): Promise<User> {
+    const { data } = await apiClient.put<User>("/auth/profile", input);
+    return data;
+  },
+
+  async changePassword(input: { currentPassword: string; newPassword: string }): Promise<void> {
+    await apiClient.post("/auth/change-password", input);
+  },
 };
