@@ -2,10 +2,13 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 COPY pom.xml .
-# Warm the dependency cache (best-effort; package below re-resolves if needed).
-RUN mvn -B -q dependency:go-offline -DskipTests || true
 COPY src ./src
-RUN mvn -B -q -DskipTests clean package
+# The cache mount keeps ~/.m2 outside the layer cache, so a pom.xml or source
+# change re-resolves only what actually changed instead of the whole tree.
+# maven.test.skip (not skipTests) also skips *compiling* tests, so the test-only
+# dependencies are never downloaded into this runtime image.
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -B -Dmaven.test.skip=true clean package
 
 # ---- run stage ----
 FROM eclipse-temurin:21-jre-jammy

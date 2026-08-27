@@ -2,7 +2,7 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm npm ci
 COPY . .
 # The SPA calls the API same-origin; nginx proxies /v1 to the backend.
 ARG VITE_API_BASE_URL=/v1
