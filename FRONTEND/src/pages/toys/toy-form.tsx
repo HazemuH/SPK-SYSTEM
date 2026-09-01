@@ -209,7 +209,7 @@ export function ToyForm({
           <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
             <p>
-              Skor 1–5 ini jadi nilai alternatif untuk sintesis SAW (dinormalisasi per kriteria).
+              Skor 1–5 ini jadi nilai alternatif untuk sintesis AHP (dinormalisasi per kriteria).
               <strong> Harga</strong> (cost) otomatis dari tab Informasi Umum.
             </p>
           </div>

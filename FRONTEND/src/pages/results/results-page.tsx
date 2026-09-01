@@ -139,7 +139,7 @@ function RankingView({
               </p>
               <p className="truncate text-xl font-bold">{winner.toyName}</p>
               <p className="text-sm text-muted-foreground">
-                Skor SAW: <strong>{winner.sawScore.toFixed(4)}</strong> · CR {profile.cr.toFixed(3)}
+                Skor Akhir: <strong>{winner.sawScore.toFixed(4)}</strong> · CR {profile.cr.toFixed(3)}
               </p>
             </div>
             <Badge>Rank #1</Badge>
@@ -155,7 +155,7 @@ function RankingView({
                 <TableHead className="w-10">#</TableHead>
                 <TableHead>Nama Mainan</TableHead>
                 <TableHead>Kategori</TableHead>
-                <TableHead>Skor SAW</TableHead>
+                <TableHead>Skor Akhir</TableHead>
                 <TableHead className="w-40">Visual</TableHead>
               </TableRow>
             </TableHeader>
@@ -216,7 +216,7 @@ function ToyRadarDialog({
       open
       onClose={onClose}
       title={toyName}
-      description="Skor ternormalisasi SAW per kriteria (rᵢⱼ)"
+      description="Skor ternormalisasi per kriteria (rᵢⱼ)"
     >
       {isLoading ? (
         <LoadingState />

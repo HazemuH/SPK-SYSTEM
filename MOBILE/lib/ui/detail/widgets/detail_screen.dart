@@ -87,7 +87,7 @@ class _DetailBody extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
         Row(
           children: [
-            _StatTile(label: 'Skor SAW', value: detail.ranked.score.toStringAsFixed(3), color: AppColors.primary),
+            _StatTile(label: 'Skor Akhir', value: detail.ranked.score.toStringAsFixed(3), color: AppColors.primary),
             const SizedBox(width: AppSpacing.sm),
             _StatTile(label: 'Rank Global', value: '#${detail.globalRank}', color: AppColors.accent),
             const SizedBox(width: AppSpacing.sm),
@@ -135,7 +135,7 @@ class _DetailBody extends StatelessWidget {
               Text('Skor Ternormalisasi (rᵢⱼ)', style: AppTypography.labelLarge),
               const SizedBox(height: 2),
               Text(
-                'Skor SAW = Σ (bobot kriteria × nilai di bawah)',
+                'Skor Akhir = Σ (bobot kriteria × nilai di bawah)',
                 style: AppTypography.bodySmall,
               ),
               const SizedBox(height: AppSpacing.md),

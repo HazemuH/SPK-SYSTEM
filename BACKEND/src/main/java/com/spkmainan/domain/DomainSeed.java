@@ -13,7 +13,8 @@ import java.util.Map;
 /**
  * Static seed definitions ported verbatim from the Hi-Fi design
  * (design/ahp-toko-mainan/project/hifi/data.jsx): 8 categories, 10 criteria,
- * 5 weight profiles, 50 toys (with 1–5 benefit ratings computed the same way).
+ * 5 weight profiles, and the 50 alternatives A1–A50 (with 1–5 benefit ratings
+ * computed the same way).
  * Builds JPA entities for {@code DomainSeeder} to persist on first startup.
  */
 public final class DomainSeed {
@@ -68,57 +69,62 @@ public final class DomainSeed {
             new double[]{0.15, 0.10, 0.09, 0.08, 0.18, 0.20, 0.12, 0.03, 0.03, 0.02}),
     };
 
+    /**
+     * The 50 alternatives (A1–A50) in thesis order — array index i maps to code
+     * "A" + (i + 1), which is also the insertion order used by {@code DomainSeeder}.
+     * Columns: name, category code, price (Rp), age min, age max, tags.
+     */
     private static final Object[][] TOY_DEF = {
-        {"Balok Kayu Edukasi Pelangi", "edukatif", 120000, 2, 6, new String[]{"Kayu", "Tanpa Baterai", "Bestseller"}},
-        {"Puzzle Hewan Nusantara 100pcs", "puzzle", 85000, 4, 8, new String[]{"Kayu", "Edukatif"}},
-        {"Boneka Barbie Fashionista", "boneka", 195000, 3, 10, new String[]{"Roleplay"}},
-        {"Sepeda Roda Tiga Anak", "outdoor", 450000, 2, 5, new String[]{"Outdoor", "Motorik"}},
-        {"Lego Classic Creative Bricks", "konstruksi", 350000, 6, 12, new String[]{"Bestseller", "Kreatif"}},
-        {"Mobil Remote Control Off-Road", "kendaraan", 275000, 6, 14, new String[]{"Baterai", "Remote"}},
-        {"Play-Doh Set Kreasi Warna", "seni", 95000, 3, 8, new String[]{"Kreatif", "Sensorik"}},
-        {"Bola Sepak Mini Anak", "olahraga", 75000, 4, 10, new String[]{"Outdoor", "Motorik"}},
-        {"Puzzle Peta Indonesia Kayu", "puzzle", 110000, 5, 10, new String[]{"Kayu", "Edukatif"}},
-        {"Boneka Beruang Teddy Jumbo", "boneka", 165000, 1, 8, new String[]{"Lembut", "Hadiah"}},
-        {"Skuter Lipat Roda Tiga", "outdoor", 520000, 3, 8, new String[]{"Outdoor", "Motorik"}},
-        {"Lego Technic Excavator", "konstruksi", 680000, 9, 16, new String[]{"Kompleks", "Kreatif"}},
-        {"Meja Lukis Anak Magnetik", "seni", 135000, 3, 9, new String[]{"Kreatif", "Reusable"}},
-        {"Truk Pasir Pantai Besar", "kendaraan", 98000, 2, 6, new String[]{"Outdoor", "Tanpa Baterai"}},
-        {"Abacus Sempoa Edukasi", "edukatif", 65000, 4, 10, new String[]{"Kayu", "Edukatif", "Hemat"}},
-        {"Trampolin Mini Indoor", "olahraga", 650000, 3, 8, new String[]{"Indoor", "Motorik"}},
-        {"Puzzle 3D Menara Eiffel", "puzzle", 145000, 8, 15, new String[]{"Kompleks", "Kreatif"}},
-        {"Boneka Tangan Hewan Set", "boneka", 88000, 2, 7, new String[]{"Roleplay", "Lembut"}},
-        {"Mobil-mobilan Pull Back", "kendaraan", 55000, 3, 8, new String[]{"Tanpa Baterai", "Hemat"}},
-        {"Kereta Api Kayu Set Rel", "konstruksi", 310000, 3, 9, new String[]{"Kayu", "Bestseller"}},
-        {"Crayon Jumbo 24 Warna", "seni", 52000, 2, 8, new String[]{"Kreatif", "Hemat"}},
-        {"Hula Hoop Pelangi Anak", "olahraga", 60000, 4, 12, new String[]{"Outdoor", "Hemat"}},
-        {"Sepeda BMX Anak 16 inch", "outdoor", 780000, 5, 10, new String[]{"Outdoor", "Motorik"}},
-        {"Flashcard Alfabet & Angka", "edukatif", 70000, 2, 6, new String[]{"Edukatif", "Hemat"}},
-        {"Puzzle Lantai Busa Angka", "puzzle", 92000, 1, 5, new String[]{"Sensorik", "Edukatif"}},
-        {"Boneka Bayi Reborn", "boneka", 240000, 4, 10, new String[]{"Roleplay"}},
-        {"Helikopter Remote Mini", "kendaraan", 335000, 8, 15, new String[]{"Baterai", "Remote"}},
-        {"Tenda Bermain Istana", "outdoor", 420000, 2, 7, new String[]{"Indoor", "Roleplay"}},
-        {"Slime Kit DIY Glitter", "seni", 78000, 5, 12, new String[]{"Sensorik", "Kreatif"}},
-        {"Raket Badminton Anak Set", "olahraga", 115000, 5, 12, new String[]{"Outdoor", "Motorik"}},
-        {"Mikroskop Mainan Edukasi", "edukatif", 230000, 7, 14, new String[]{"Edukatif", "Sains"}},
-        {"Lego Duplo Kebun Binatang", "konstruksi", 295000, 2, 5, new String[]{"Bestseller", "Balita"}},
-        {"Puzzle Jigsaw Dinosaurus 200pcs", "puzzle", 125000, 6, 12, new String[]{"Kompleks"}},
-        {"Boneka Action Figure Superhero", "boneka", 155000, 4, 12, new String[]{"Roleplay"}},
-        {"Mobil Aki Anak Jeep", "kendaraan", 1200000, 2, 6, new String[]{"Baterai", "Premium"}},
-        {"Ayunan Indoor Anak", "outdoor", 380000, 2, 7, new String[]{"Indoor", "Motorik"}},
-        {"Kanvas Lukis & Cat Air Set", "seni", 105000, 5, 13, new String[]{"Kreatif"}},
-        {"Set Bowling Mini Anak", "olahraga", 88000, 3, 9, new String[]{"Indoor", "Motorik"}},
-        {"Globe Dunia Berputar Edukasi", "edukatif", 140000, 6, 14, new String[]{"Edukatif", "Sains"}},
-        {"Magnetic Tiles 60pcs", "konstruksi", 365000, 3, 10, new String[]{"Kreatif", "Bestseller"}},
-        {"Puzzle Kubus Rubik 3x3", "puzzle", 45000, 7, 15, new String[]{"Hemat", "Logika"}},
-        {"Boneka Jari Cerita Dongeng", "boneka", 62000, 2, 6, new String[]{"Roleplay", "Hemat"}},
-        {"Pesawat Terbang Styrofoam", "kendaraan", 48000, 5, 12, new String[]{"Outdoor", "Hemat"}},
-        {"Kolam Bola Anak Portable", "outdoor", 340000, 1, 5, new String[]{"Indoor", "Sensorik"}},
-        {"Plastisin Lilin Malam 12 Warna", "seni", 58000, 3, 9, new String[]{"Sensorik", "Hemat"}},
-        {"Skipping Rope Penghitung", "olahraga", 55000, 6, 14, new String[]{"Outdoor", "Hemat"}},
-        {"Buku Aktivitas Stiker Edukasi", "edukatif", 48000, 3, 7, new String[]{"Edukatif", "Hemat"}},
-        {"Set Konstruksi Mur & Baut", "konstruksi", 175000, 4, 10, new String[]{"Motorik", "Kreatif"}},
-        {"Puzzle Tangram Kayu Klasik", "puzzle", 68000, 5, 12, new String[]{"Kayu", "Logika"}},
-        {"Boneka Masak-masakan Set Dapur", "boneka", 185000, 3, 8, new String[]{"Roleplay"}},
+        {"Mobil – mobilan", "kendaraan", 45000, 2, 6, new String[]{"Tanpa Baterai", "Hemat"}},
+        {"Mobil Remote Control", "kendaraan", 275000, 5, 12, new String[]{"Baterai", "Remote"}},
+        {"Mobil Aki Anak", "kendaraan", 1250000, 2, 6, new String[]{"Baterai", "Premium"}},
+        {"Truk Mainan", "kendaraan", 95000, 2, 7, new String[]{"Tanpa Baterai", "Outdoor"}},
+        {"Bus Mainan", "kendaraan", 85000, 2, 7, new String[]{"Tanpa Baterai"}},
+        {"Kereta Mainan", "kendaraan", 210000, 3, 8, new String[]{"Baterai", "Bestseller"}},
+        {"Pesawat Mainan", "kendaraan", 70000, 3, 9, new String[]{"Tanpa Baterai"}},
+        {"Helikopter Mainan", "kendaraan", 180000, 5, 12, new String[]{"Baterai"}},
+        {"Motor Mainan", "kendaraan", 90000, 3, 8, new String[]{"Tanpa Baterai"}},
+        {"Diecast Mobil", "kendaraan", 55000, 4, 12, new String[]{"Koleksi", "Hemat"}},
+        {"Robot Mainan", "boneka", 150000, 4, 10, new String[]{"Baterai", "Roleplay"}},
+        {"Robot Remote Control", "boneka", 320000, 6, 12, new String[]{"Baterai", "Remote"}},
+        {"Boneka", "boneka", 95000, 1, 8, new String[]{"Lembut", "Hadiah"}},
+        {"Boneka Karakter", "boneka", 145000, 3, 10, new String[]{"Lembut", "Karakter"}},
+        {"Boneka Bayi", "boneka", 165000, 3, 9, new String[]{"Roleplay"}},
+        {"Boneka Hewan", "boneka", 110000, 1, 8, new String[]{"Lembut", "Hadiah"}},
+        {"Barbie/Doll Set", "boneka", 235000, 4, 12, new String[]{"Roleplay", "Bestseller"}},
+        {"Masak-masakan", "boneka", 175000, 3, 8, new String[]{"Roleplay", "Motorik"}},
+        {"Set Dokter", "boneka", 120000, 3, 8, new String[]{"Roleplay", "Edukatif"}},
+        {"Set Alat Pertukangan", "boneka", 135000, 3, 9, new String[]{"Roleplay", "Motorik"}},
+        {"Balok Susun", "konstruksi", 130000, 2, 6, new String[]{"Kayu", "Tanpa Baterai"}},
+        {"Lego/Brick Building", "konstruksi", 360000, 5, 12, new String[]{"Kreatif", "Bestseller"}},
+        {"Puzzle Anak", "puzzle", 65000, 3, 8, new String[]{"Edukatif", "Hemat"}},
+        {"Puzzle 3D", "puzzle", 145000, 7, 14, new String[]{"Kompleks", "Kreatif"}},
+        {"Nano Block", "konstruksi", 115000, 8, 15, new String[]{"Kompleks", "Kreatif"}},
+        {"Board Game", "puzzle", 195000, 6, 14, new String[]{"Keluarga", "Logika"}},
+        {"Permainan Kartu", "puzzle", 45000, 5, 12, new String[]{"Keluarga", "Hemat"}},
+        {"Kartu Edukasi", "edukatif", 60000, 2, 7, new String[]{"Edukatif", "Hemat"}},
+        {"Slime", "seni", 35000, 5, 12, new String[]{"Sensorik", "Hemat"}},
+        {"Squishy", "seni", 30000, 4, 10, new String[]{"Sensorik", "Hemat"}},
+        {"Pop It", "seni", 28000, 3, 10, new String[]{"Sensorik", "Hemat"}},
+        {"Fidget Toy", "seni", 40000, 5, 12, new String[]{"Sensorik", "Hemat"}},
+        {"Tembakan Mainan", "outdoor", 85000, 6, 12, new String[]{"Outdoor", "Motorik"}},
+        {"Pistol Gelembung", "outdoor", 65000, 3, 8, new String[]{"Outdoor", "Baterai"}},
+        {"Bubble Gun", "outdoor", 75000, 3, 8, new String[]{"Outdoor", "Baterai"}},
+        {"Ketapel Mainan", "outdoor", 35000, 7, 12, new String[]{"Outdoor", "Hemat"}},
+        {"Layang-layang", "outdoor", 40000, 5, 12, new String[]{"Outdoor", "Hemat"}},
+        {"Bola Anak", "olahraga", 55000, 2, 10, new String[]{"Outdoor", "Motorik"}},
+        {"Bola Basket Mini", "olahraga", 145000, 4, 10, new String[]{"Indoor", "Motorik"}},
+        {"Bowling Anak", "olahraga", 95000, 3, 9, new String[]{"Indoor", "Motorik"}},
+        {"Skuter Anak", "outdoor", 480000, 4, 10, new String[]{"Outdoor", "Motorik"}},
+        {"Sepeda Anak", "outdoor", 850000, 3, 10, new String[]{"Outdoor", "Motorik"}},
+        {"Tenda Anak", "outdoor", 320000, 2, 8, new String[]{"Indoor", "Roleplay"}},
+        {"Alat Musik Mainan", "seni", 125000, 2, 7, new String[]{"Musik", "Sensorik"}},
+        {"Piano/Keyboard Anak", "seni", 285000, 3, 9, new String[]{"Musik", "Baterai"}},
+        {"Mainan Mewarnai", "seni", 55000, 3, 9, new String[]{"Kreatif", "Hemat"}},
+        {"Set Kerajinan DIY", "seni", 110000, 6, 12, new String[]{"Kreatif", "Motorik"}},
+        {"Mainan Edukasi Berhitung", "edukatif", 80000, 4, 9, new String[]{"Edukatif", "Logika"}},
+        {"Mainan Edukasi Alfabet", "edukatif", 75000, 3, 8, new String[]{"Edukatif"}},
+        {"Celengan DIY/Kerajinan", "seni", 65000, 5, 11, new String[]{"Kreatif", "Hemat"}},
     };
 
     // CAT_BASE keyed by category code: [edukasi, usia, kreatif, populer, mudah]
@@ -175,8 +181,9 @@ public final class DomainSeed {
             long harga = ((Number) t[2]).longValue();
             int usiaMin = (int) t[3];
             int usiaMax = (int) t[4];
-            int stok = (i % 11 == 3) ? 0 : 4 + ((i * 13) % 40);
-            boolean aktif = (i % 17) != 9;
+            int stok = 6 + ((i * 13) % 40);
+            // Every alternative A1–A50 takes part in the ranking.
+            boolean aktif = true;
             String deskripsi = "Mainan " + categoryCode + " untuk anak usia " + usiaMin + "–" + usiaMax + " tahun.";
             ToyEntity e = new ToyEntity(name, categoryCode, harga, usiaMin, usiaMax, stok, aktif, deskripsi);
             e.setTags(new LinkedHashSet<>(List.of((String[]) t[5])));

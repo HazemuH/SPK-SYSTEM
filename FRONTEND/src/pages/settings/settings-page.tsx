@@ -204,17 +204,17 @@ function AboutCard() {
       <CardContent className="space-y-4 py-6">
         <div>
           <p className="text-lg font-bold">KIDORA — Pemilihan Mainan Anak</p>
-          <p className="text-sm text-muted-foreground">Versi 1.0.0 · Metode AHP-SAW</p>
+          <p className="text-sm text-muted-foreground">Versi 1.0.0 · Metode AHP</p>
         </div>
         <p className="text-sm leading-relaxed text-muted-foreground">
-          Sistem Pendukung Keputusan pemilihan mainan anak dengan metode hybrid{" "}
-          <strong className="text-foreground">AHP-SAW</strong>: <strong>AHP</strong> untuk pembobotan
-          kriteria (pairwise + uji konsistensi CR) dan <strong>SAW</strong> untuk sintesis alternatif
-          (normalisasi + weighted sum), dengan{" "}
+          Sistem Pendukung Keputusan pemilihan mainan anak dengan metode{" "}
+          <strong className="text-foreground">AHP</strong>: pembobotan kriteria lewat perbandingan
+          berpasangan + uji konsistensi CR, lalu sintesis alternatif (normalisasi + penjumlahan
+          terbobot), dengan{" "}
           <strong className="text-foreground">scenario weights</strong> untuk hasil dinamis.
         </p>
         <div className="flex flex-wrap gap-2">
-          {["AHP-SAW", "5 Profil Bobot", "CR ≤ 0,10", "10 Kriteria", "8 Kategori", "50 Mainan"].map(
+          {["AHP", "5 Profil Bobot", "CR ≤ 0,10", "10 Kriteria", "8 Kategori", "50 Mainan"].map(
             (x) => (
               <Badge key={x} variant="secondary">
                 {x}

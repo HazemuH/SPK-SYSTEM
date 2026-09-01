@@ -100,7 +100,7 @@ public class CalculationService {
                 allConsistent ? "Semua CR ≤ 0,10 (AHP)" : "Ada profil dengan CR > 0,10"),
             new PrecheckItem("Penilaian alternatif (rating 1–5)", ratingsOk,
                 toys.size() + " mainan × " + benefit.size() + " kriteria benefit"),
-            new PrecheckItem("Harga (cost) terisi", priceOk, "Dinormalisasi min/x saat SAW"),
+            new PrecheckItem("Harga (cost) terisi", priceOk, "Dinormalisasi min/x (kriteria cost)"),
             new PrecheckItem("Data mainan & kategori lengkap", dataOk,
                 toys.size() + " mainan · " + catalog.categories().size() + " kategori"));
 

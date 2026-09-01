@@ -48,7 +48,7 @@ export function CalculationPage() {
       <div>
         <h1 className="text-2xl font-semibold">Kalkulasi &amp; Publikasi</h1>
         <p className="text-sm text-muted-foreground">
-          Sintesis SAW per profil → publikasi ke aplikasi mobile.
+          Sintesis AHP per profil → publikasi ke aplikasi mobile.
         </p>
       </div>
 
@@ -109,7 +109,7 @@ export function CalculationPage() {
                     onClick={() => runMutation.mutate()}
                   >
                     <Calculator className="h-4 w-4" />
-                    {runMutation.isPending ? "Menghitung…" : "Jalankan Kalkulasi AHP-SAW"}
+                    {runMutation.isPending ? "Menghitung…" : "Jalankan Kalkulasi AHP"}
                   </Button>
                 </div>
                 {runMutation.isError && (
@@ -176,8 +176,8 @@ export function CalculationPage() {
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {run.published
-                      ? "Aplikasi mobile kini membaca ranking & skor SAW terbaru."
-                      : "Menulis mainan, kriteria, bobot profil & skor SAW ternormalisasi."}
+                      ? "Aplikasi mobile kini membaca ranking & skor akhir terbaru."
+                      : "Menulis mainan, kriteria, bobot profil & skor ternormalisasi."}
                   </p>
                 </div>
               </div>

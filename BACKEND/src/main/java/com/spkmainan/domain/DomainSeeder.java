@@ -13,9 +13,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Populates the SPK domain from {@link DomainSeed} on first startup (when the
- * tables are empty). Idempotent, runs in all profiles so reference data + the
- * demo catalog exist out of the box.
+ * Populates the SPK domain from {@link DomainSeed} on startup, per table, whenever
+ * that table is empty. Idempotent, runs in all profiles so reference data + the
+ * catalog exist out of the box; re-seeding the toys also recomputes and publishes
+ * a calculation session.
  */
 @Component
 @Order(1)
@@ -42,18 +43,37 @@ public class DomainSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        if (categories.count() > 0) {
+        // Per-table so a reference-data reset (e.g. the V5 catalog reset) re-seeds
+        // just what was wiped instead of nothing at all.
+        boolean seededReference = false;
+        if (categories.count() == 0) {
+            categories.saveAll(DomainSeed.categories());
+            seededReference = true;
+        }
+        if (criteria.count() == 0) {
+            criteria.saveAll(DomainSeed.criteria());
+            seededReference = true;
+        }
+        if (profiles.count() == 0) {
+            profiles.saveAll(DomainSeed.weightProfiles());
+            seededReference = true;
+        }
+        boolean seededToys = false;
+        if (toys.count() == 0) {
+            toys.saveAll(DomainSeed.toys());
+            seededToys = true;
+        }
+        if (!seededReference && !seededToys) {
             return;
         }
-        categories.saveAll(DomainSeed.categories());
-        criteria.saveAll(DomainSeed.criteria());
-        profiles.saveAll(DomainSeed.weightProfiles());
-        toys.saveAll(DomainSeed.toys());
         log.info("Seeded SPK domain: {} categories, {} criteria, {} profiles, {} toys",
             categories.count(), criteria.count(), profiles.count(), toys.count());
 
-        // Produce & publish an initial session so reports/mobile have data out of the box.
-        calculations.runAndPublish();
-        log.info("Seeded & published initial calculation session");
+        // A fresh alternative set invalidates every earlier ranking, so recompute
+        // and publish so reports/mobile immediately reflect the new catalog.
+        if (seededToys) {
+            calculations.runAndPublish();
+            log.info("Recomputed & published calculation session for {} alternatives", toys.count());
+        }
     }
 }

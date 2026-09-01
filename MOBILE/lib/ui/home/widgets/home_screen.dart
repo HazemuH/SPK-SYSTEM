@@ -108,7 +108,7 @@ class _Header extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Didukung metode AHP-SAW — pilih cara kamu di bawah.',
+                'Didukung metode AHP — pilih cara kamu di bawah.',
                 style: AppTypography.bodyMedium.copyWith(color: AppColors.white.withValues(alpha: 0.8)),
               ),
             ],

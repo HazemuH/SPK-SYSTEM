@@ -38,7 +38,7 @@ export function DashboardPage() {
       <div>
         <h1 className="text-2xl font-semibold">Halo, {user?.name} 👋</h1>
         <p className="text-sm text-muted-foreground">
-          Ringkasan sistem pendukung keputusan · Metode AHP-SAW
+          Ringkasan sistem pendukung keputusan · Metode AHP
         </p>
       </div>
 

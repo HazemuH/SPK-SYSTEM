@@ -318,7 +318,7 @@ function CriterionDialog({
               <option value="cost">Cost (makin rendah makin baik)</option>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Semua kriteria dinilai 1–5 (kecuali Harga). Tipe menentukan cara normalisasi SAW.
+              Semua kriteria dinilai 1–5 (kecuali Harga). Tipe menentukan cara normalisasi.
             </p>
           </div>
         )}

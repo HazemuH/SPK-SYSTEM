@@ -225,7 +225,7 @@ class _CompareTable extends StatelessWidget {
               DataRow(
                 color: WidgetStateProperty.all(AppColors.primary.withValues(alpha: 0.06)),
                 cells: [
-                  DataCell(Text('SKOR SAW', style: AppTypography.labelMedium.copyWith(color: AppColors.primary))),
+                  DataCell(Text('SKOR AKHIR', style: AppTypography.labelMedium.copyWith(color: AppColors.primary))),
                   for (final total in result.totals)
                     DataCell(
                       Text(
@@ -262,7 +262,7 @@ class _CompareTable extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
           child: Text(
-            'Ganti profil di atas → skor & pemenang berubah (bobot AHP, sintesis SAW).',
+            'Ganti profil di atas → skor & pemenang berubah (bobot AHP, sintesis terbobot).',
             style: AppTypography.bodySmall,
             textAlign: TextAlign.center,
           ),

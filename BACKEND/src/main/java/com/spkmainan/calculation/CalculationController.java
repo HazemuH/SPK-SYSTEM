@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/calculations")
-@Tag(name = "Calculations", description = "Admin AHP-SAW calculation & publish (auth)")
+@Tag(name = "Calculations", description = "Admin AHP calculation & publish (auth)")
 public class CalculationController {
 
     private final CalculationService service;
@@ -33,7 +33,7 @@ public class CalculationController {
 
     @PostMapping("/run")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Synthesize SAW rankings for every profile (creates a session)")
+    @Operation(summary = "Synthesize AHP rankings for every profile (creates a session)")
     public RunSummary run() {
         return service.run();
     }
