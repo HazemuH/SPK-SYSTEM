@@ -69,7 +69,7 @@ String _profileEmoji(String icon) {
 }
 
 /// Preference quiz → recommendation. Read-only: the server filters/ranks the
-/// published AHP-SAW result from the answers.
+/// published AHP result from the answers.
 class RecommendationScreen extends ConsumerStatefulWidget {
   const RecommendationScreen({super.key});
 
@@ -193,7 +193,7 @@ class _RecommendationScreenState extends ConsumerState<RecommendationScreen> {
   }
 
   /// Dynamic final step: the user picks an AHP weight profile (managed on the web).
-  /// The chosen profile code drives the AHP-SAW ranking.
+  /// The chosen profile code drives the AHP ranking.
   Widget _buildProfileStep() {
     final selected = _answers[_prioritasKey];
     final profiles = ref.watch(publishedProfilesProvider);

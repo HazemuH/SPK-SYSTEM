@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Public, no-auth read API for the mobile app. Serves the <b>latest published</b>
- * AHP-SAW snapshot (frozen scores/ranking/weights/normalized matrix) and derives
+ * AHP snapshot (frozen scores/ranking/weights/priority matrix) and derives
  * top/catalog/recommend/compare from it; toy display attributes are hydrated live.
  * No published run → empty. See {@code /public/**} in SecurityConfig.
  */

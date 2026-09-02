@@ -23,3 +23,6 @@
 # Local design bundle — kept local, not committed (see */docs/PLAN_MVP.md instead)
 /design/
 *.zip
+
+# Thesis working folder (documents, generated Bab 4 tables) — kept local
+/SKRIPSI_KIDORA/

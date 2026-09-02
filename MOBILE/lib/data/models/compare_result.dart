@@ -44,7 +44,7 @@ class CompareRow extends Equatable {
   List<Object?> get props => [criterion, cells];
 }
 
-/// A toy's total SAW score in the comparison (`CompareTotal`).
+/// A toy's total AHP score in the comparison (`CompareTotal`).
 class CompareTotal extends Equatable {
   const CompareTotal({required this.toyId, required this.score, required this.winner});
 

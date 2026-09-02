@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * The public API must work WITHOUT authentication (mobile is login-less) and
- * return the AHP-SAW-backed shapes the app expects — served from the latest
+ * return the AHP-backed shapes the app expects — served from the latest
  * PUBLISHED snapshot (the publish gate).
  */
 @SpringBootTest
@@ -111,7 +111,7 @@ class PublicControllerTest {
         String before = mockMvc.perform(get("/public/top").param("limit", "10"))
             .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
 
-        // Admin slams toy 1's benefit ratings to the minimum — this would tank its live SAW score.
+        // Admin slams toy 1's benefit ratings to the minimum — this would tank its live AHP score.
         String scores = "{\"scores\":{\"keamanan\":1,\"edukasi\":1,\"usia\":1,\"kualitas\":1,"
             + "\"tahan\":1,\"material\":1,\"kreatif\":1,\"populer\":1,\"mudah\":1}}";
         mockMvc.perform(put("/toys/1/scores")

@@ -1,6 +1,6 @@
 package com.spkmainan.criterion;
 
-import com.spkmainan.ahp.SawEngine;
+import com.spkmainan.ahp.AhpSynthesisEngine;
 import com.spkmainan.common.exception.BadRequestException;
 import com.spkmainan.common.exception.ConflictException;
 import com.spkmainan.common.exception.ResourceNotFoundException;
@@ -17,14 +17,21 @@ import org.springframework.transaction.annotation.Transactional;
 public class CriterionService {
 
     private final CriterionRepository repository;
+    private final CriterionLevelRepository levels;
 
-    public CriterionService(CriterionRepository repository) {
+    public CriterionService(CriterionRepository repository, CriterionLevelRepository levels) {
         this.repository = repository;
+        this.levels = levels;
+    }
+
+    /** Attaches the criterion's S1–S5 subcriteria to the response. */
+    private Response toResponse(CriterionEntity c) {
+        return Response.from(c, levels.findByCriterionCodeOrderByLevelAsc(c.getCode()));
     }
 
     @Transactional(readOnly = true)
     public List<Response> findAll() {
-        return repository.findAllByOrderByNoAsc().stream().map(Response::from).toList();
+        return repository.findAllByOrderByNoAsc().stream().map(this::toResponse).toList();
     }
 
     @Transactional
@@ -34,7 +41,7 @@ public class CriterionService {
         CriterionEntity c = new CriterionEntity(
             uniqueCode(request.name()), no, request.name(), type,
             request.description(), request.abbr(), true);
-        return Response.from(repository.save(c));
+        return toResponse(repository.save(c));
     }
 
     @Transactional
@@ -48,18 +55,19 @@ public class CriterionService {
         if (request.active() != null) {
             c.setActive(request.active());
         }
-        return Response.from(repository.save(c));
+        return toResponse(repository.save(c));
     }
 
     @Transactional
     public void delete(Long id) {
         CriterionEntity c = getOrThrow(id);
-        if (SawEngine.PRICE_CRITERION_CODE.equals(c.getCode())) {
+        if (AhpSynthesisEngine.PRICE_CRITERION_CODE.equals(c.getCode())) {
             throw new ConflictException("Kriteria Harga tidak bisa dihapus (nilainya = harga jual).");
         }
         // Clean up this criterion's ratings and profile weights before removing it.
         repository.deleteToyScores(c.getCode());
         repository.deleteProfileWeights(c.getCode());
+        levels.deleteByCriterionCode(c.getCode());
         repository.delete(c);
     }
 

@@ -34,7 +34,7 @@ export interface RankingRow {
   toyId: number;
   toyName: string;
   categoryName: string | null;
-  sawScore: number;
+  finalScore: number;
 }
 
 export interface ProfileDetail {

@@ -10,7 +10,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-/** One calculation session: SAW synthesis of the active toys for every weight profile. */
+/** One calculation session: AHP synthesis of the active toys for every weight profile. */
 @Entity
 @Table(name = "calculation_runs")
 public class CalculationRun extends BaseEntity {

@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.spkmainan.ahp.SawEngine;
+import com.spkmainan.ahp.AhpSynthesisEngine;
 import com.spkmainan.calculation.CalculationRunRepository;
 import com.spkmainan.domain.DomainCatalog;
 import java.util.List;
@@ -18,7 +18,7 @@ class CatalogServiceEmptyTest {
         CalculationRunRepository runs = mock(CalculationRunRepository.class);
         when(runs.findFirstByPublishedTrueOrderByPublishedAtDesc()).thenReturn(Optional.empty());
         DomainCatalog catalog = mock(DomainCatalog.class);
-        return new CatalogService(catalog, new SawEngine(), runs);
+        return new CatalogService(catalog, new AhpSynthesisEngine(), runs);
     }
 
     @Test

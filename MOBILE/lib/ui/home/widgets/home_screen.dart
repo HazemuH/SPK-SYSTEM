@@ -16,7 +16,7 @@ import '../../core/widgets/ranked_toy_tile.dart';
 import '../view_model/home_providers.dart';
 
 /// The app's entry hub. Read-only, no login: three modes + a Top-5 list of the
-/// published AHP-SAW recommendations.
+/// published AHP recommendations.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 

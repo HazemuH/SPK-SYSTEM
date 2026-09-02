@@ -21,7 +21,7 @@ public final class CalculationDto {
     public record RunSummary(Long id, String code, Instant runAt, int altCount, boolean published,
                              Instant publishedAt, List<ProfileSummary> results) {}
 
-    public record RankingRow(int rank, int toyId, String toyName, String categoryName, double sawScore) {}
+    public record RankingRow(int rank, int toyId, String toyName, String categoryName, double finalScore) {}
 
     public record ProfileDetail(String profileCode, String profileName, double cr, double lambdaMax,
                                 double ci, boolean consistent, List<RankingRow> ranking) {}

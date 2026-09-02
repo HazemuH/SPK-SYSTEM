@@ -7,7 +7,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-/** One toy's rank + SAW score within a profile's result (snapshot). */
+/** One toy's rank + final AHP score within a profile's result (snapshot). */
 @Entity
 @Table(name = "ranking_entries")
 public class RankingEntry extends BaseEntity {
@@ -29,18 +29,18 @@ public class RankingEntry extends BaseEntity {
     @Column(name = "rank_no", nullable = false)
     private int rankNo;
 
-    @Column(name = "saw_score", nullable = false)
-    private double sawScore;
+    @Column(name = "final_score", nullable = false)
+    private double finalScore;
 
     protected RankingEntry() {
     }
 
-    public RankingEntry(int toyId, String toyName, String categoryName, int rankNo, double sawScore) {
+    public RankingEntry(int toyId, String toyName, String categoryName, int rankNo, double finalScore) {
         this.toyId = toyId;
         this.toyName = toyName;
         this.categoryName = categoryName;
         this.rankNo = rankNo;
-        this.sawScore = sawScore;
+        this.finalScore = finalScore;
     }
 
     public void setResult(CalculationResult result) {
@@ -63,7 +63,7 @@ public class RankingEntry extends BaseEntity {
         return rankNo;
     }
 
-    public double getSawScore() {
-        return sawScore;
+    public double getFinalScore() {
+        return finalScore;
     }
 }

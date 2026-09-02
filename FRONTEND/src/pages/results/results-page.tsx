@@ -129,7 +129,7 @@ function RankingView({
   const [selected, setSelected] = useState<{ id: number; name: string } | null>(null);
   const profile = detail.results.find((r) => r.profileCode === profileCode) ?? detail.results[0];
   if (!profile) return <EmptyState message="Tidak ada hasil." />;
-  const maxScore = Math.max(0.0001, ...profile.ranking.map((r) => r.sawScore));
+  const maxScore = Math.max(0.0001, ...profile.ranking.map((r) => r.finalScore));
   const winner = profile.ranking[0];
 
   return (
@@ -166,7 +166,7 @@ function RankingView({
               </p>
               <p className="truncate text-xl font-bold">{winner.toyName}</p>
               <p className="text-sm text-muted-foreground">
-                Skor Akhir: <strong>{winner.sawScore.toFixed(4)}</strong> · CR {profile.cr.toFixed(3)}
+                Skor Akhir: <strong>{winner.finalScore.toFixed(4)}</strong> · CR {profile.cr.toFixed(3)}
               </p>
             </div>
             <Badge>Rank #1</Badge>
@@ -196,9 +196,9 @@ function RankingView({
                   <TableCell className="font-bold">{r.rank}</TableCell>
                   <TableCell className="font-medium">{r.toyName}</TableCell>
                   <TableCell className="text-muted-foreground">{r.categoryName}</TableCell>
-                  <TableCell className="font-mono font-semibold">{r.sawScore.toFixed(4)}</TableCell>
+                  <TableCell className="font-mono font-semibold">{r.finalScore.toFixed(4)}</TableCell>
                   <TableCell>
-                    <WeightBar pct={(r.sawScore / maxScore) * 100} />
+                    <WeightBar pct={(r.finalScore / maxScore) * 100} />
                   </TableCell>
                 </TableRow>
               ))}
@@ -291,7 +291,7 @@ function runHeader(detail: RunDetail): CsvValue[][] {
 function rankingRows(profile: ProfileDetail): CsvValue[][] {
   return [
     ["Rank", "Nama Mainan", "Kategori", "Skor Akhir"],
-    ...profile.ranking.map((r) => [r.rank, r.toyName, r.categoryName, r.sawScore]),
+    ...profile.ranking.map((r) => [r.rank, r.toyName, r.categoryName, r.finalScore]),
   ];
 }
 

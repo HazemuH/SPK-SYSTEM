@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Info, Pencil, Plus, Trash2 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { ChevronDown, ChevronRight, Info, Pencil, Plus, Trash2 } from "lucide-react";
+import { Fragment, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +36,7 @@ export function CriteriaPage() {
   const [editing, setEditing] = useState<Criterion | null>(null);
   const [deleting, setDeleting] = useState<Criterion | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [openLevels, setOpenLevels] = useState<string | null>(null);
 
   const criteriaQuery = useQuery({ queryKey: ["criteria"], queryFn: criteriaApi.list });
   const profilesQuery = useQuery({
@@ -119,6 +120,7 @@ export function CriteriaPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-8"></TableHead>
                 <TableHead className="w-8">No</TableHead>
                 <TableHead>Kriteria</TableHead>
                 <TableHead>Tipe</TableHead>
@@ -130,51 +132,89 @@ export function CriteriaPage() {
               {criteria.map((c) => {
                 const w = profile.weights[c.code] ?? 0;
                 const isPrice = c.code === PRICE_CODE;
+                const expanded = openLevels === c.code;
                 return (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-semibold text-muted-foreground">{c.no}</TableCell>
-                    <TableCell>
-                      <p className="font-medium">
-                        {c.name}
-                        {!c.active && (
-                          <span className="ml-2 text-xs text-muted-foreground">(nonaktif)</span>
-                        )}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">{c.description}</p>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={c.type === "cost" ? "destructive" : "default"}>
-                        {c.type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <WeightBar pct={(w / maxWeight) * 100} />
-                        <span className="w-9 text-right font-mono text-xs font-bold">
-                          {percent(w)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="outline" size="icon" onClick={() => setEditing(c)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          disabled={isPrice}
-                          title={isPrice ? "Kriteria Harga tidak bisa dihapus" : undefined}
-                          onClick={() => {
-                            setDeleteError(null);
-                            setDeleting(c);
-                          }}
+                  <Fragment key={c.id}>
+                    <TableRow>
+                      <TableCell>
+                        <button
+                          type="button"
+                          aria-label={`Subkriteria ${c.name}`}
+                          className="text-muted-foreground hover:text-foreground"
+                          onClick={() => setOpenLevels(expanded ? null : c.code)}
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                          {expanded ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </button>
+                      </TableCell>
+                      <TableCell className="font-semibold text-muted-foreground">{c.no}</TableCell>
+                      <TableCell>
+                        <p className="font-medium">
+                          {c.name}
+                          {!c.active && (
+                            <span className="ml-2 text-xs text-muted-foreground">(nonaktif)</span>
+                          )}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">{c.description}</p>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={c.type === "cost" ? "destructive" : "default"}>
+                          {c.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <WeightBar pct={(w / maxWeight) * 100} />
+                          <span className="w-9 text-right font-mono text-xs font-bold">
+                            {percent(w)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button variant="outline" size="icon" onClick={() => setEditing(c)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            disabled={isPrice}
+                            title={isPrice ? "Kriteria Harga tidak bisa dihapus" : undefined}
+                            onClick={() => {
+                              setDeleteError(null);
+                              setDeleting(c);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    {expanded && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="bg-muted/40">
+                          <p className="mb-2 text-xs font-semibold text-muted-foreground">
+                            Subkriteria — bobot prioritas lokal (Σ = 1,000)
+                          </p>
+                          <div className="space-y-1.5">
+                            {c.levels.map((l) => (
+                              <div key={l.code} className="flex items-center gap-3">
+                                <span className="w-7 font-mono text-xs font-bold">{l.code}</span>
+                                <span className="w-64 truncate text-xs">{l.label}</span>
+                                <WeightBar pct={l.priority * 100} />
+                                <span className="w-12 text-right font-mono text-xs font-bold">
+                                  {l.priority.toFixed(3).replace(".", ",")}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </Fragment>
                 );
               })}
             </TableBody>
@@ -318,7 +358,8 @@ function CriterionDialog({
               <option value="cost">Cost (makin rendah makin baik)</option>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Semua kriteria dinilai 1–5 (kecuali Harga). Tipe menentukan cara normalisasi.
+              Semua kriteria dinilai 1–5 (kecuali Harga, dari rentang harga). Nilai itu dipetakan ke
+              subkriteria S1–S5.
             </p>
           </div>
         )}

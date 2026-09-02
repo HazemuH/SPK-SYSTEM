@@ -1,6 +1,6 @@
 package com.spkmainan.calculation;
 
-import com.spkmainan.ahp.SawEngine;
+import com.spkmainan.ahp.AhpSynthesisEngine;
 import com.spkmainan.calculation.CalculationDto.PrecheckItem;
 import com.spkmainan.calculation.CalculationDto.PrecheckResponse;
 import com.spkmainan.calculation.CalculationDto.PublishStatus;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Runs the SAW synthesis for every weight profile, persists the ranking snapshot
+ * Runs the AHP synthesis for every weight profile, persists the ranking snapshot
  * (session), and publishes it. AHP consistency comes from each profile's stored CR.
  */
 @Service
@@ -36,17 +36,17 @@ public class CalculationService {
 
     private final CalculationRunRepository runs;
     private final DomainCatalog catalog;
-    private final SawEngine saw;
+    private final AhpSynthesisEngine ahp;
     private final ToyRepository toyRepo;
     private final CriterionRepository criterionRepo;
     private final WeightProfileRepository profileRepo;
 
-    public CalculationService(CalculationRunRepository runs, DomainCatalog catalog, SawEngine saw,
+    public CalculationService(CalculationRunRepository runs, DomainCatalog catalog, AhpSynthesisEngine ahp,
                               ToyRepository toyRepo, CriterionRepository criterionRepo,
                               WeightProfileRepository profileRepo) {
         this.runs = runs;
         this.catalog = catalog;
-        this.saw = saw;
+        this.ahp = ahp;
         this.toyRepo = toyRepo;
         this.criterionRepo = criterionRepo;
         this.profileRepo = profileRepo;
@@ -98,9 +98,9 @@ public class CalculationService {
         List<PrecheckItem> items = List.of(
             new PrecheckItem("Pairwise kriteria — " + profiles.size() + " profil", allConsistent,
                 allConsistent ? "Semua CR ≤ 0,10 (AHP)" : "Ada profil dengan CR > 0,10"),
-            new PrecheckItem("Penilaian alternatif (rating 1–5)", ratingsOk,
+            new PrecheckItem("Penilaian alternatif (subkriteria S1–S5)", ratingsOk,
                 toys.size() + " mainan × " + benefit.size() + " kriteria benefit"),
-            new PrecheckItem("Harga (cost) terisi", priceOk, "Dinormalisasi min/x (kriteria cost)"),
+            new PrecheckItem("Harga (cost) terisi", priceOk, "Dipetakan ke subkriteria S1–S5 harga"),
             new PrecheckItem("Data mainan & kategori lengkap", dataOk,
                 toys.size() + " mainan · " + catalog.categories().size() + " kategori"));
 
@@ -121,7 +121,7 @@ public class CalculationService {
         }
         List<Criterion> criteria = catalog.activeCriteria();
         List<Toy> active = catalog.activeToys();
-        Map<Integer, Map<String, Double>> norm = saw.normalize(active, criteria);
+        Map<Integer, Map<String, Double>> norm = ahp.priorities(active, criteria, catalog.levelPriorities());
 
         String code = String.format("%03d", runs.count() + 1);
         CalculationRun run = new CalculationRun(code, Instant.now(), active.size());
@@ -131,7 +131,7 @@ public class CalculationService {
             run.addCriterion(new CalculationCriterion(
                 c.code(), c.name(), c.abbr(), c.type().name(), c.no()));
         }
-        // Freeze the normalized decision matrix r_ij.
+        // Freeze the decision matrix p_ij (subcriteria local priorities).
         for (Toy t : active) {
             Map<String, Double> row = norm.getOrDefault(t.id(), Map.of());
             for (Criterion c : criteria) {
@@ -152,11 +152,11 @@ public class CalculationService {
 
             List<Toy> sorted = new ArrayList<>(active);
             sorted.sort(Comparator.comparingDouble(
-                (Toy t) -> saw.score(norm.getOrDefault(t.id(), Map.of()), profile.weights())).reversed());
+                (Toy t) -> ahp.score(norm.getOrDefault(t.id(), Map.of()), profile.weights())).reversed());
 
             for (int i = 0; i < sorted.size(); i++) {
                 Toy t = sorted.get(i);
-                double s = saw.score(norm.getOrDefault(t.id(), Map.of()), profile.weights());
+                double s = ahp.score(norm.getOrDefault(t.id(), Map.of()), profile.weights());
                 result.addRanking(new RankingEntry(t.id(), t.name(), t.categoryName(), i + 1, s));
             }
             if (!sorted.isEmpty()) {
@@ -210,7 +210,7 @@ public class CalculationService {
             List<RankingRow> ranking = r.getRankings().stream()
                 .sorted(Comparator.comparingInt(RankingEntry::getRankNo))
                 .map(e -> new RankingRow(e.getRankNo(), e.getToyId(), e.getToyName(),
-                    e.getCategoryName(), e.getSawScore()))
+                    e.getCategoryName(), e.getFinalScore()))
                 .toList();
             return new ProfileDetail(r.getProfileCode(), r.getProfileName(), r.getCr(),
                 r.getLambdaMax(), r.getCi(), r.isConsistent(), ranking);

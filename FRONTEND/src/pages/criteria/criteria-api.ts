@@ -1,5 +1,13 @@
 import { apiClient } from "@/lib/api-client";
 
+/** One of a criterion's five subcriteria (S1 best … S5 worst) with its AHP priority. */
+export interface CriterionLevel {
+  level: number;
+  code: string;
+  label: string;
+  priority: number;
+}
+
 export interface Criterion {
   id: number;
   code: string;
@@ -9,6 +17,7 @@ export interface Criterion {
   description: string | null;
   abbr: string | null;
   active: boolean;
+  levels: CriterionLevel[];
 }
 
 export interface CriterionCreate {

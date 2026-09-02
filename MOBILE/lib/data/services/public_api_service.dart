@@ -16,7 +16,7 @@ final publicApiServiceProvider = Provider<PublicApiService>((ref) {
 });
 
 /// Talks to the public (no-auth) `/public/**` endpoints — the published
-/// AHP-SAW results. The only place that knows about HTTP/Dio.
+/// AHP results. The only place that knows about HTTP/Dio.
 class PublicApiService {
   const PublicApiService(this._dio);
 

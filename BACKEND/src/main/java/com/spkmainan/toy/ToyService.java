@@ -6,7 +6,7 @@ import com.spkmainan.common.exception.BadRequestException;
 import com.spkmainan.common.exception.ResourceNotFoundException;
 import com.spkmainan.criterion.CriterionEntity;
 import com.spkmainan.criterion.CriterionRepository;
-import com.spkmainan.ahp.SawEngine;
+import com.spkmainan.ahp.AhpSynthesisEngine;
 import com.spkmainan.toy.ToyDto.Request;
 import com.spkmainan.toy.ToyDto.Response;
 import java.util.LinkedHashMap;
@@ -113,7 +113,7 @@ public class ToyService {
         // Every criterion is rated 1–5 except "harga" (its value is the price).
         Set<String> ratable = criterionRepository.findAll().stream()
             .map(CriterionEntity::getCode)
-            .filter(code -> !SawEngine.PRICE_CRITERION_CODE.equals(code))
+            .filter(code -> !AhpSynthesisEngine.PRICE_CRITERION_CODE.equals(code))
             .collect(Collectors.toSet());
         Map<String, Integer> clean = new LinkedHashMap<>();
         for (var e : scores.entrySet()) {

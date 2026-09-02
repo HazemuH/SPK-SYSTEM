@@ -1,6 +1,6 @@
 package com.spkmainan.publicapi;
 
-import com.spkmainan.ahp.SawEngine;
+import com.spkmainan.ahp.AhpSynthesisEngine;
 import com.spkmainan.calculation.CalculationCriterion;
 import com.spkmainan.calculation.CalculationNorm;
 import com.spkmainan.calculation.CalculationResult;
@@ -36,7 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Read-side service backing the public (mobile) API. It serves the latest
- * <b>published</b> calculation run: SAW scores, ranking, weights, and normalized
+ * <b>published</b> calculation run: AHP scores, ranking, weights, and normalized
  * values (r_ij) are frozen at publish time (the publish gate). Toy display
  * attributes (name/price/stock/…) are hydrated live per toy_id, so a shop's
  * current price/stock shows through while the decision output stays frozen until
@@ -69,12 +69,12 @@ public class CatalogService {
         new SortOption("kreatif", "Paling kreatif"));
 
     private final DomainCatalog catalog;
-    private final SawEngine saw;
+    private final AhpSynthesisEngine ahp;
     private final CalculationRunRepository runs;
 
-    public CatalogService(DomainCatalog catalog, SawEngine saw, CalculationRunRepository runs) {
+    public CatalogService(DomainCatalog catalog, AhpSynthesisEngine ahp, CalculationRunRepository runs) {
         this.catalog = catalog;
-        this.saw = saw;
+        this.ahp = ahp;
         this.runs = runs;
     }
 
@@ -153,7 +153,7 @@ public class CatalogService {
     }
 
     private double score(PublishedSnapshot s, Toy toy, WeightProfile profile) {
-        return saw.score(s.norm().getOrDefault(toy.id(), Map.of()), profile.weights());
+        return ahp.score(s.norm().getOrDefault(toy.id(), Map.of()), profile.weights());
     }
 
     private List<RankedToy> rank(PublishedSnapshot s, List<Toy> toys, WeightProfile profile) {
@@ -232,7 +232,7 @@ public class CatalogService {
         List<RankedToy> global = rank(s, s.toys(), balanced);
         int globalRank = global.stream().filter(r -> r.toy().id() == toyId).findFirst()
             .map(RankedToy::rank).orElse(0);
-        double sawScore = balanced == null ? 0.0 : score(s, toy, balanced);
+        double finalScore = balanced == null ? 0.0 : score(s, toy, balanced);
 
         List<Toy> sameCat = s.toys().stream()
             .filter(t -> t.categoryId().equals(toy.categoryId())).toList();
@@ -254,7 +254,7 @@ public class CatalogService {
                 .findFirst().map(RankedToy::toy).orElse(null);
         }
 
-        return new ToyDetail(new RankedToy(globalRank, sawScore, toyView(toy)),
+        return new ToyDetail(new RankedToy(globalRank, finalScore, toyView(toy)),
             globalRank, catRank, sameCat.size(), row, strengths, weaknesses, nextBest);
     }
 

@@ -1,7 +1,9 @@
 package com.spkmainan.domain;
 
+import com.spkmainan.ahp.AhpSynthesisEngine;
 import com.spkmainan.category.CategoryEntity;
 import com.spkmainan.criterion.CriterionEntity;
+import com.spkmainan.criterion.CriterionLevelEntity;
 import com.spkmainan.toy.ToyEntity;
 import com.spkmainan.weightprofile.WeightProfileEntity;
 import java.util.ArrayList;
@@ -48,13 +50,58 @@ public final class DomainSeed {
         new CritDef("mudah", 10, "Kemudahan Penggunaan", CriterionType.BENEFIT, "Mudah dimainkan anak", "Mudah"),
     };
 
+    private record LevelDef(String criterion, String[] labels, double[] priorities) {}
+
+    /**
+     * The five subcriteria of every criterion, best band (S1) first, with the AHP
+     * local priority each band carries (Tabel 4.7–4.39 of the thesis). Priorities
+     * within a criterion sum to 1 — they are what the synthesis multiplies by the
+     * criterion weight, so no min/max normalization is involved anywhere.
+     */
+    private static final LevelDef[] LEVEL_DEF = {
+        new LevelDef("keamanan",
+            new String[]{"Sangat Aman", "Aman", "Cukup Aman", "Kurang Aman", "Tidak Aman"},
+            new double[]{0.416, 0.262, 0.161, 0.099, 0.062}),
+        new LevelDef("edukasi",
+            new String[]{"Sangat Tinggi", "Tinggi", "Cukup Tinggi", "Rendah", "Sangat Rendah"},
+            new double[]{0.522, 0.244, 0.130, 0.061, 0.042}),
+        new LevelDef("usia",
+            new String[]{"Sangat Sesuai", "Sesuai", "Cukup Sesuai", "Kurang Sesuai", "Tidak Sesuai"},
+            new double[]{0.504, 0.259, 0.131, 0.061, 0.045}),
+        new LevelDef("harga",
+            new String[]{"Sangat Terjangkau (< Rp90.000)", "Terjangkau (Rp90.000 – Rp179.999)",
+                "Cukup Terjangkau (Rp180.000 – Rp349.999)", "Mahal (Rp350.000 – Rp599.999)",
+                "Sangat Mahal (\u2265 Rp600.000)"},
+            new double[]{0.427, 0.274, 0.178, 0.075, 0.045}),
+        new LevelDef("kualitas",
+            new String[]{"Sangat Baik", "Baik", "Cukup Baik", "Kurang Baik", "Tidak Baik"},
+            new double[]{0.456, 0.269, 0.140, 0.082, 0.053}),
+        new LevelDef("tahan",
+            new String[]{"Sangat Awet", "Awet", "Cukup Awet", "Kurang Awet", "Tidak Awet"},
+            new double[]{0.489, 0.235, 0.156, 0.070, 0.050}),
+        new LevelDef("material",
+            new String[]{"Sangat Baik", "Baik", "Cukup Baik", "Kurang Baik", "Tidak Baik"},
+            new double[]{0.447, 0.297, 0.130, 0.080, 0.043}),
+        new LevelDef("kreatif",
+            new String[]{"Sangat Tinggi", "Tinggi", "Cukup Tinggi", "Rendah", "Sangat Rendah"},
+            new double[]{0.502, 0.254, 0.122, 0.080, 0.042}),
+        new LevelDef("populer",
+            new String[]{"Sangat Populer", "Populer", "Cukup Populer", "Kurang Populer",
+                "Tidak Populer"},
+            new double[]{0.447, 0.271, 0.160, 0.075, 0.047}),
+        new LevelDef("mudah",
+            new String[]{"Sangat Mudah", "Mudah", "Cukup Mudah", "Sulit", "Sangat Sulit"},
+            new double[]{0.463, 0.261, 0.136, 0.090, 0.050}),
+    };
+
     private record ProfDef(String id, String name, String shortName, String icon, double cr, double lambda,
                            double ci, String desc, boolean isDefault, double[] w) {}
 
     private static final ProfDef[] PROFILE_DEF = {
+        // The main AHP weight vector (Tabel 4.6) — the one the thesis rankings use.
         new ProfDef("balanced", "Seimbang", "Seimbang", "scale", 0.041, 10.55, 0.061,
-            "Bobot proporsional untuk semua kriteria — rekomendasi umum.", true,
-            new double[]{0.20, 0.16, 0.13, 0.12, 0.11, 0.09, 0.07, 0.05, 0.04, 0.03}),
+            "Bobot AHP utama hasil pairwise 10 kriteria — rekomendasi umum.", true,
+            new double[]{0.199, 0.180, 0.115, 0.115, 0.115, 0.077, 0.071, 0.054, 0.039, 0.028}),
         new ProfDef("safety", "Utamakan Keamanan", "Keamanan", "lock", 0.058, 10.78, 0.086,
             "Menonjolkan keamanan & material — ideal untuk balita.", false,
             new double[]{0.34, 0.12, 0.12, 0.07, 0.10, 0.08, 0.10, 0.03, 0.02, 0.02}),
@@ -146,6 +193,17 @@ public final class DomainSeed {
         return out;
     }
 
+    public static List<CriterionLevelEntity> criterionLevels() {
+        List<CriterionLevelEntity> out = new ArrayList<>();
+        for (LevelDef d : LEVEL_DEF) {
+            for (int i = 0; i < d.labels().length; i++) {
+                out.add(new CriterionLevelEntity(
+                    d.criterion(), i + 1, d.labels()[i], d.priorities()[i]));
+            }
+        }
+        return out;
+    }
+
     public static List<CriterionEntity> criteria() {
         List<CriterionEntity> out = new ArrayList<>();
         for (CritDef c : CRITERION_DEF) {
@@ -198,12 +256,9 @@ public final class DomainSeed {
         return (int) Math.max(1, Math.min(5, Math.round(v)));
     }
 
+    /** Same bands the "harga" subcriteria use, so seeded ratings and S-levels agree. */
     private static int priceTier(long h) {
-        if (h >= 600000) return 5;
-        if (h >= 350000) return 4;
-        if (h >= 180000) return 3;
-        if (h >= 90000) return 2;
-        return 1;
+        return AhpSynthesisEngine.priceLevel(h);
     }
 
     private static int jit(int i, int k) {

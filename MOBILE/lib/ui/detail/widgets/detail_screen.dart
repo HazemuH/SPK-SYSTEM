@@ -17,7 +17,7 @@ import '../../core/widgets/app_loading.dart';
 import '../../core/widgets/screen_wrapper.dart';
 import '../view_model/detail_providers.dart';
 
-/// Read-only toy detail: SAW score, ranks, "why", and normalized r_ij bars.
+/// Read-only toy detail: final AHP score, ranks, "why", and subcriteria priority bars.
 class DetailScreen extends ConsumerWidget {
   const DetailScreen({super.key, required this.toyId});
 

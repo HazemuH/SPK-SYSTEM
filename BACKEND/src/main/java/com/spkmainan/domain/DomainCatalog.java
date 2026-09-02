@@ -1,8 +1,11 @@
 package com.spkmainan.domain;
 
+import com.spkmainan.ahp.AhpSynthesisEngine;
 import com.spkmainan.category.CategoryEntity;
 import com.spkmainan.category.CategoryRepository;
 import com.spkmainan.criterion.CriterionEntity;
+import com.spkmainan.criterion.CriterionLevelEntity;
+import com.spkmainan.criterion.CriterionLevelRepository;
 import com.spkmainan.criterion.CriterionRepository;
 import com.spkmainan.toy.ToyEntity;
 import com.spkmainan.toy.ToyRepository;
@@ -16,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Reads the persisted SPK domain and maps entities to the immutable value
- * records the AHP-SAW engine and public API consume. Single seam between
+ * records the AHP engine and public API consume. Single seam between
  * persistence and the calculation/read side.
  */
 @Component
@@ -27,13 +30,16 @@ public class DomainCatalog {
 
     private final CategoryRepository categoryRepo;
     private final CriterionRepository criterionRepo;
+    private final CriterionLevelRepository levelRepo;
     private final WeightProfileRepository profileRepo;
     private final ToyRepository toyRepo;
 
     public DomainCatalog(CategoryRepository categoryRepo, CriterionRepository criterionRepo,
+                         CriterionLevelRepository levelRepo,
                          WeightProfileRepository profileRepo, ToyRepository toyRepo) {
         this.categoryRepo = categoryRepo;
         this.criterionRepo = criterionRepo;
+        this.levelRepo = levelRepo;
         this.profileRepo = profileRepo;
         this.toyRepo = toyRepo;
     }
@@ -50,7 +56,7 @@ public class DomainCatalog {
             .toList();
     }
 
-    /** Only active criteria (archived/inactive are excluded from AHP-SAW). */
+    /** Only active criteria (archived/inactive are excluded from the AHP synthesis). */
     public List<Criterion> activeCriteria() {
         return criterionRepo.findAllByOrderByNoAsc().stream()
             .filter(CriterionEntity::isActive)
@@ -61,6 +67,27 @@ public class DomainCatalog {
     private Criterion toCriterion(CriterionEntity c) {
         return new Criterion(c.getCode(), c.getNo(), c.getName(), c.getType(),
             c.getDescription(), c.getAbbr());
+    }
+
+    /** Every criterion's subcriteria (S1–S5), ordered by criterion then level. */
+    public List<CriterionLevel> criterionLevels() {
+        return levelRepo.findAllByOrderByCriterionCodeAscLevelAsc().stream()
+            .map(l -> new CriterionLevel(l.getCriterionCode(), l.getLevel(), l.getLabel(),
+                l.getPriority()))
+            .toList();
+    }
+
+    /** Criterion code → the five local priorities, S1 first — what the synthesis reads. */
+    public Map<String, double[]> levelPriorities() {
+        Map<String, double[]> out = new LinkedHashMap<>();
+        for (CriterionLevelEntity l : levelRepo.findAllByOrderByCriterionCodeAscLevelAsc()) {
+            double[] byLevel = out.computeIfAbsent(l.getCriterionCode(),
+                k -> new double[AhpSynthesisEngine.LEVELS]);
+            if (l.getLevel() >= 1 && l.getLevel() <= AhpSynthesisEngine.LEVELS) {
+                byLevel[l.getLevel() - 1] = l.getPriority();
+            }
+        }
+        return out;
     }
 
     public List<WeightProfile> profiles() {

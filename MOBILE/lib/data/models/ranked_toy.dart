@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import 'toy.dart';
 
-/// A toy plus its SPK rank and SAW score within a ranking.
+/// A toy plus its SPK rank and final AHP score within a ranking.
 class RankedToy extends Equatable {
   const RankedToy({required this.rank, required this.score, required this.toy});
 

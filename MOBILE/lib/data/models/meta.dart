@@ -62,7 +62,7 @@ class Meta extends Equatable {
   final List<Criterion> criteria;
   final List<SortOption> sortOptions;
 
-  /// When the admin last published the AHP-SAW result (null = never published).
+  /// When the admin last published the AHP result (null = never published).
   final DateTime? lastPublishedAt;
 
   @override
