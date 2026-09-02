@@ -36,7 +36,8 @@ class DashboardControllerTest {
             .andExpect(jsonPath("$.totalProfiles").value(5))
             .andExpect(jsonPath("$.totalToys").value(Matchers.greaterThanOrEqualTo(50)))
             .andExpect(jsonPath("$.categoryDistribution.length()").value(Matchers.greaterThanOrEqualTo(8)))
-            .andExpect(jsonPath("$.top5.length()").value(5))
+            .andExpect(jsonPath("$.topOverall.length()").value(10))
+            .andExpect(jsonPath("$.topOverall[0].rank").value(1))
             .andExpect(jsonPath("$.recentSessions").isArray());
     }
 

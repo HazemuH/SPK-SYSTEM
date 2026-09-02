@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Admin dashboard summary (auth): counts, category distribution, top-5, recent sessions. */
+/** Admin dashboard summary (auth): counts, category distribution, overall top-10, recent sessions. */
 @RestController
 @RequestMapping("/dashboard")
 @Tag(name = "Dashboard", description = "Admin dashboard summary (auth)")
@@ -31,25 +31,30 @@ public class DashboardController {
 
     public record CategorySlice(String name, long count) {}
 
-    public record TopToy(String name, double score) {}
+    public record TopToy(int rank, String name, String category, double score) {}
 
     public record Summary(
             int totalToys, int totalCriteria, int totalCategories, int totalProfiles,
-            List<CategorySlice> categoryDistribution, List<TopToy> top5,
+            List<CategorySlice> categoryDistribution, List<TopToy> topOverall,
             List<RunSummary> recentSessions, PublishStatus publishStatus) {}
+
+    /** How many alternatives the overall ranking card shows. */
+    private static final int TOP_LIMIT = 10;
 
     @GetMapping("/summary")
     public Summary summary() {
         List<CategorySlice> dist = catalog.categories().stream()
             .map(c -> new CategorySlice(c.name(), catalog.categoryCount(c.id())))
             .toList();
-        List<TopToy> top5 = catalogService.top("balanced", 5).stream()
-            .map(r -> new TopToy(r.toy().name(), r.score()))
+        // One ranking over every alternative under the global AHP criteria weights
+        // (null profile = the default one), not a single scenario profile.
+        List<TopToy> topOverall = catalogService.top(null, TOP_LIMIT).stream()
+            .map(r -> new TopToy(r.rank(), r.toy().name(), r.toy().category(), r.score()))
             .toList();
         List<RunSummary> recent = calculations.list().stream().limit(5).toList();
 
         return new Summary(catalog.toys().size(), catalog.criteria().size(),
-            catalog.categories().size(), catalog.profiles().size(), dist, top5, recent,
+            catalog.categories().size(), catalog.profiles().size(), dist, topOverall, recent,
             calculations.publishStatus());
     }
 }

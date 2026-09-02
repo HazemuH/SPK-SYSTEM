@@ -9,7 +9,7 @@ const fixture: DashboardSummary = {
   totalCategories: 8,
   totalProfiles: 5,
   categoryDistribution: [{ name: "Edukatif", count: 6 }],
-  top5: [{ name: "Lego Technic Excavator", score: 0.794 }],
+  topOverall: [{ rank: 1, name: "Lego/Brick Building", category: "Konstruksi", score: 0.777 }],
   recentSessions: [],
   publishStatus: { published: true, lastPublishedAt: "2026-07-12T00:00:00Z", stale: false },
 };
@@ -23,11 +23,12 @@ vi.mock("./dashboard-api", () => ({
 const { DashboardPage } = await import("./dashboard-page");
 
 describe("DashboardPage", () => {
-  it("renders the summary stats and top-5", async () => {
+  it("renders the summary stats and the overall ranking", async () => {
     summaryMock.mockResolvedValueOnce(fixture);
     renderWithProviders(<DashboardPage />);
     expect(await screen.findByText("Total Mainan")).toBeInTheDocument();
-    expect(await screen.findByText("Lego Technic Excavator")).toBeInTheDocument();
+    expect(await screen.findByText("Lego/Brick Building")).toBeInTheDocument();
+    expect(await screen.findByText("Top 10 — Peringkat Keseluruhan")).toBeInTheDocument();
     // 50 total toys stat
     expect(await screen.findByText("50")).toBeInTheDocument();
   });

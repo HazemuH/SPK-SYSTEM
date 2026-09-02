@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
+  Download,
   Package,
   SlidersHorizontal,
   Layers,
@@ -9,6 +10,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WeightBar } from "@/components/ui/weight-bar";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
@@ -22,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getApiErrorMessage } from "@/lib/api-client";
+import { downloadCsv, exportFilename, type CsvValue } from "@/lib/export";
 import { formatDate } from "@/lib/format";
 import { useAuth } from "@/features/auth/use-auth";
 import { dashboardApi, type DashboardSummary } from "./dashboard-api";
@@ -35,11 +38,19 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Halo, {user?.name} 👋</h1>
-        <p className="text-sm text-muted-foreground">
-          Ringkasan sistem pendukung keputusan · Metode AHP
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">Halo, {user?.name} 👋</h1>
+          <p className="text-sm text-muted-foreground">
+            Ringkasan sistem pendukung keputusan · Metode AHP
+          </p>
+        </div>
+        {data && (
+          <Button variant="outline" size="sm" onClick={() => exportDashboard(data)}>
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
@@ -62,7 +73,7 @@ const STATS: { key: keyof DashboardSummary; label: string; hint: string; icon: L
 
 function DashboardContent({ data }: { data: DashboardSummary }) {
   const maxCat = Math.max(1, ...data.categoryDistribution.map((c) => c.count));
-  const maxScore = Math.max(0.0001, ...data.top5.map((t) => t.score));
+  const maxScore = Math.max(0.0001, ...data.topOverall.map((t) => t.score));
 
   const ps = data.publishStatus;
 
@@ -119,14 +130,18 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Top 5 — Profil Seimbang</CardTitle>
+            <CardTitle className="text-base">Top 10 — Peringkat Keseluruhan</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Semua mainan diranking dengan bobot AHP global — lintas kategori.
+            </p>
           </CardHeader>
           <CardContent className="space-y-3">
-            {data.top5.map((t, i) => (
-              <div key={t.name} className="flex items-center gap-3">
-                <span className="w-4 text-sm font-bold text-muted-foreground">{i + 1}</span>
+            {data.topOverall.map((t) => (
+              <div key={t.rank} className="flex items-center gap-3">
+                <span className="w-5 text-sm font-bold text-muted-foreground">{t.rank}</span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{t.name}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">{t.category}</p>
                   <WeightBar pct={(t.score / maxScore) * 100} />
                 </div>
                 <span className="font-mono text-xs text-muted-foreground">
@@ -166,7 +181,7 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
                 <TableRow>
                   <TableHead>Sesi</TableHead>
                   <TableHead>Tanggal</TableHead>
-                  <TableHead>Rekomendasi #1 (Seimbang)</TableHead>
+                  <TableHead>Rekomendasi #1</TableHead>
                   <TableHead>Alt.</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
@@ -192,4 +207,43 @@ function DashboardContent({ data }: { data: DashboardSummary }) {
       </Card>
     </div>
   );
+}
+
+/** Flattens the dashboard into one CSV: stats, ranking, categories, sessions. */
+function exportDashboard(data: DashboardSummary): void {
+  const rows: CsvValue[][] = [
+    ["Dashboard KIDORA — Ringkasan"],
+    ["Diekspor", new Date().toLocaleString("id-ID")],
+    [
+      "Status publikasi",
+      data.publishStatus.published
+        ? `Terpublikasi${data.publishStatus.stale ? " (ada perubahan belum dipublikasikan)" : ""}`
+        : "Belum dipublikasikan",
+    ],
+    [],
+    ["Ringkasan"],
+    ["Total Mainan", data.totalToys],
+    ["Kriteria", data.totalCriteria],
+    ["Kategori", data.totalCategories],
+    ["Profil Bobot", data.totalProfiles],
+    [],
+    ["Top 10 — Peringkat Keseluruhan (bobot AHP global)"],
+    ["Rank", "Nama Mainan", "Kategori", "Skor Akhir"],
+    ...data.topOverall.map((t) => [t.rank, t.name, t.category, t.score]),
+    [],
+    ["Distribusi Kategori"],
+    ["Kategori", "Jumlah Mainan"],
+    ...data.categoryDistribution.map((c) => [c.name, c.count]),
+    [],
+    ["Riwayat Kalkulasi"],
+    ["Sesi", "Tanggal", "Rekomendasi #1", "Alternatif", "Status"],
+    ...data.recentSessions.map((s) => [
+      `#${s.code}`,
+      formatDate(s.runAt),
+      s.results[0]?.bestToyName ?? "-",
+      s.altCount,
+      s.published ? "Terpublikasi" : "Draft",
+    ]),
+  ];
+  downloadCsv(exportFilename("dashboard-kidora"), rows);
 }

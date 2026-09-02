@@ -30,7 +30,7 @@ export interface DashboardSummary {
   totalCategories: number;
   totalProfiles: number;
   categoryDistribution: { name: string; count: number }[];
-  top5: { name: string; score: number }[];
+  topOverall: { rank: number; name: string; category: string | null; score: number }[];
   recentSessions: RunSummary[];
   publishStatus: PublishStatus;
 }

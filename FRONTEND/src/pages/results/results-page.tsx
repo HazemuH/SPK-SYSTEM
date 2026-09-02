@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { Trophy } from "lucide-react";
+import { Download, Trophy } from "lucide-react";
 import { useState } from "react";
 import { RadarChart } from "@/components/charts/radar-chart";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
@@ -17,9 +18,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getApiErrorMessage } from "@/lib/api-client";
-import { percent } from "@/lib/format";
+import { downloadCsv, exportFilename, type CsvValue } from "@/lib/export";
+import { formatDate, percent } from "@/lib/format";
 import { publicApi } from "@/lib/public-api";
-import { calculationsApi } from "@/pages/calculation/calculations-api";
+import {
+  calculationsApi,
+  type ProfileDetail,
+  type RunDetail,
+} from "@/pages/calculation/calculations-api";
 import { criteriaApi } from "@/pages/criteria/criteria-api";
 
 export function ResultsPage() {
@@ -34,6 +40,7 @@ export function ResultsPage() {
     queryFn: () => calculationsApi.detail(activeRunId!),
     enabled: activeRunId != null,
   });
+  const activeProfileCode = profileCode ?? detailQuery.data?.results[0]?.profileCode ?? "";
 
   return (
     <div className="space-y-6">
@@ -68,6 +75,26 @@ export function ResultsPage() {
                 </option>
               ))}
             </Select>
+            {detailQuery.data && (
+              <div className="ml-auto flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportProfile(detailQuery.data!, activeProfileCode)}
+                >
+                  <Download className="h-4 w-4" />
+                  Export Profil Ini
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportAllProfiles(detailQuery.data!)}
+                >
+                  <Download className="h-4 w-4" />
+                  Export Semua Profil
+                </Button>
+              </div>
+            )}
           </div>
 
           {detailQuery.isLoading ? (
@@ -80,7 +107,7 @@ export function ResultsPage() {
           ) : (
             <RankingView
               detail={detailQuery.data}
-              profileCode={profileCode ?? detailQuery.data.results[0]?.profileCode ?? ""}
+              profileCode={activeProfileCode}
               onProfile={setProfileCode}
             />
           )}
@@ -95,7 +122,7 @@ function RankingView({
   profileCode,
   onProfile,
 }: {
-  detail: import("@/pages/calculation/calculations-api").RunDetail;
+  detail: RunDetail;
   profileCode: string;
   onProfile: (code: string) => void;
 }) {
@@ -248,4 +275,47 @@ function ToyRadarDialog({
       )}
     </Dialog>
   );
+}
+
+/** Session metadata that heads every exported file. */
+function runHeader(detail: RunDetail): CsvValue[][] {
+  return [
+    ["Hasil Kalkulasi KIDORA"],
+    ["Sesi", `#${detail.code}`],
+    ["Tanggal", formatDate(detail.runAt)],
+    ["Jumlah alternatif", detail.altCount],
+    ["Status", detail.published ? "Terpublikasi" : "Draft"],
+  ];
+}
+
+function rankingRows(profile: ProfileDetail): CsvValue[][] {
+  return [
+    ["Rank", "Nama Mainan", "Kategori", "Skor Akhir"],
+    ...profile.ranking.map((r) => [r.rank, r.toyName, r.categoryName, r.sawScore]),
+  ];
+}
+
+/** The active profile's full ranking. */
+function exportProfile(detail: RunDetail, profileCode: string): void {
+  const profile = detail.results.find((r) => r.profileCode === profileCode) ?? detail.results[0];
+  if (!profile) return;
+  downloadCsv(exportFilename("hasil-sesi", detail.code, profile.profileName), [
+    ...runHeader(detail),
+    ["Profil bobot", profile.profileName],
+    ["CR", profile.cr, profile.consistent ? "konsisten" : "TIDAK konsisten"],
+    [],
+    ...rankingRows(profile),
+  ]);
+}
+
+/** Every profile's ranking in one long-format file (a "Profil" column per block). */
+function exportAllProfiles(detail: RunDetail): void {
+  const rows: CsvValue[][] = [...runHeader(detail), []];
+  for (const profile of detail.results) {
+    rows.push([`Profil: ${profile.profileName}`]);
+    rows.push(["CR", profile.cr, profile.consistent ? "konsisten" : "TIDAK konsisten"]);
+    rows.push(...rankingRows(profile));
+    rows.push([]);
+  }
+  downloadCsv(exportFilename("hasil-sesi", detail.code, "semua-profil"), rows);
 }
