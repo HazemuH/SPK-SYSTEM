@@ -151,8 +151,12 @@ public class CalculationService {
             }
 
             List<Toy> sorted = new ArrayList<>(active);
+            // Ties break on the alternative code (A1 before A2), so a rank is
+            // reproducible run to run and matches the ordering in the write-up.
             sorted.sort(Comparator.comparingDouble(
-                (Toy t) -> ahp.score(norm.getOrDefault(t.id(), Map.of()), profile.weights())).reversed());
+                    (Toy t) -> ahp.score(norm.getOrDefault(t.id(), Map.of()), profile.weights()))
+                .reversed()
+                .thenComparingInt(Toy::id));
 
             for (int i = 0; i < sorted.size(); i++) {
                 Toy t = sorted.get(i);

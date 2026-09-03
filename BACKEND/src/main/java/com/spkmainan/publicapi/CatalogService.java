@@ -161,7 +161,9 @@ public class CatalogService {
             return List.of();
         }
         List<Toy> sorted = new ArrayList<>(toys);
-        sorted.sort(Comparator.comparingDouble((Toy t) -> score(s, t, profile)).reversed());
+        // Same tie-break as the calculation snapshot: equal scores order by code.
+        sorted.sort(Comparator.comparingDouble((Toy t) -> score(s, t, profile)).reversed()
+            .thenComparingInt(Toy::id));
         List<RankedToy> out = new ArrayList<>();
         for (int i = 0; i < sorted.size(); i++) {
             Toy t = sorted.get(i);
@@ -204,7 +206,8 @@ public class CatalogService {
         List<RankedToy> ranked;
         if (sortCode != null && !sortCode.isBlank()) {
             List<Toy> sorted = new ArrayList<>(s.toys());
-            sorted.sort(Comparator.comparingDouble((Toy t) -> normValue(s, t.id(), sortCode)).reversed());
+            sorted.sort(Comparator.comparingDouble((Toy t) -> normValue(s, t.id(), sortCode))
+                .reversed().thenComparingInt(Toy::id));
             ranked = new ArrayList<>();
             for (int i = 0; i < sorted.size(); i++) {
                 Toy t = sorted.get(i);

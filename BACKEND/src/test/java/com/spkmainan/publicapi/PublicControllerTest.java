@@ -32,7 +32,7 @@ class PublicControllerTest {
     void meta_isPublic_andReturnsSeededReferenceData() throws Exception {
         mockMvc.perform(get("/public/meta"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.categories.length()").value(8))
+            .andExpect(jsonPath("$.categories.length()").value(15))
             .andExpect(jsonPath("$.criteria.length()").value(10))
             .andExpect(jsonPath("$.profiles.length()").value(5));
     }

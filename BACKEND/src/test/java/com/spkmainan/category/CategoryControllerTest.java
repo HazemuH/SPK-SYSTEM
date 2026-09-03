@@ -38,7 +38,7 @@ class CategoryControllerTest {
     void list_returnsSeededCategories() throws Exception {
         mockMvc.perform(get("/categories"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.length()").value(8))
+            .andExpect(jsonPath("$.length()").value(15))
             .andExpect(jsonPath("$[0].toyCount").isNumber());
     }
 

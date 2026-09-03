@@ -214,7 +214,7 @@ function AboutCard() {
           <strong className="text-foreground">scenario weights</strong> untuk hasil dinamis.
         </p>
         <div className="flex flex-wrap gap-2">
-          {["AHP", "5 Profil Bobot", "CR ≤ 0,10", "10 Kriteria", "8 Kategori", "50 Mainan"].map(
+          {["AHP", "5 Profil Bobot", "CR ≤ 0,10", "10 Kriteria", "15 Kategori", "50 Mainan"].map(
             (x) => (
               <Badge key={x} variant="secondary">
                 {x}
